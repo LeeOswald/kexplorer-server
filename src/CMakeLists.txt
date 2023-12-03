@@ -16,7 +16,9 @@ set(BOOST_LIBRARIES Boost::program_options)
 
 
 add_executable(${TARGET} 
-    main.cpp
+    logger.cxx
+    logger.hxx
+    main.cxx
 )
 
 
