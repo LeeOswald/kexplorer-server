@@ -68,11 +68,13 @@ void daemonize() noexcept
 
 int main(int argc, char* argv[])
 {
+#if !KES_DEBUG
     if (::geteuid() != 0)
     {
         std::cerr << "Root privileges required\n";
         return EXIT_FAILURE;
     }
+#endif
 
     try
     {
@@ -97,12 +99,16 @@ int main(int argc, char* argv[])
 
         Kes::Log::Level logLevel = vm.count("verbose") ? Kes::Log::Level::Debug : Kes::Log::Level::Info;
 
+#if !KES_DEBUG
         Kes::Private::Logger logger(logLevel, "/var/log/kexplorer-server.log");
+#else
+        Kes::Private::Logger logger(logLevel, "kexplorer-server.log");
+#endif
 
         if (vm.count("daemon"))
             daemonize();
 
-        std::string bindAddr("127.0.0.1:665");
+        std::string bindAddr("127.0.0.1:6665");
         if (vm.count("address"))
         {
             bindAddr = vm["address"].as<std::string>();
@@ -124,9 +130,10 @@ int main(int argc, char* argv[])
             }
         );
 
-        const size_t inBufferSize = 65536;
-        Kes::Private::SessionHandlerOptions sho(inBufferSize, &logger);
-        Kes::Private::TcpServer<Kes::Private::SessionHandler, Kes::Private::SessionHandlerOptions> server(runner->io_context(), sho, bindAddr.c_str(), inBufferSize, &logger);
+        const size_t bufferSize = 65536;
+        const size_t bufferLimit = 65536;
+        Kes::Private::SessionHandlerOptions sho(bufferSize, bufferLimit, &logger);
+        Kes::Private::TcpServer<Kes::Private::SessionHandler, Kes::Private::SessionHandlerOptions> server(runner->io_context(), sho, bindAddr.c_str(), bufferSize, &logger);
 
         io.run();
     }

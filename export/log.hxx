@@ -39,19 +39,19 @@ protected:
 
 
 #define LogDebug(log, ...) \
-    log && (log->level(log->ctx) <= Kes::Log::Level::Debug) && log->write(Kes::Log::Level::Debug, __VA_ARGS__)
+    log && (log->level() <= Kes::Log::Level::Debug) && log->write(Kes::Log::Level::Debug, __VA_ARGS__)
 
 #define LogInfo(log, ...) \
-    log && (log->level(log->ctx) <= Kes::Log::Level::Info) && log->write(log->ctx, Kes::Log::Level::Info, __VA_ARGS__)
+    log && (log->level() <= Kes::Log::Level::Info) && log->write(log->ctx, Kes::Log::Level::Info, __VA_ARGS__)
 
 #define LogWarning(log, ...) \
-    log && (log->level(log->ctx) <= Kes::Log::Level::Warning) && log->write(log->ctx, Kes::Log::Level::Warning, __VA_ARGS__)
+    log && (log->level() <= Kes::Log::Level::Warning) && log->write(log->ctx, Kes::Log::Level::Warning, __VA_ARGS__)
 
 #define LogError(log, ...) \
-    log && (log->level(log->ctx) <= Kes::Log::Level::Error) && log->write(log->ctx, Kes::Log::Level::Error, __VA_ARGS__)
+    log && (log->level() <= Kes::Log::Level::Error) && log->write(log->ctx, Kes::Log::Level::Error, __VA_ARGS__)
 
 #define LogFatal(log, ...) \
-    log && (log->level(log->ctx) <= Kes::Log::Level::Fatal) && log->write(log->ctx, Kes::Log::Level::Fatal, __VA_ARGS__)
+    log && (log->level() <= Kes::Log::Level::Fatal) && log->write(log->ctx, Kes::Log::Level::Fatal, __VA_ARGS__)
 
 
 

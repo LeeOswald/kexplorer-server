@@ -14,11 +14,13 @@ namespace Private
 
 struct SessionHandlerOptions
 {
-    size_t inBufferSize;
+    size_t bufferSize;
+    size_t bufferLimit;
     Kes::Log::ILog* log;
 
-    explicit SessionHandlerOptions(size_t inBufferSize, Kes::Log::ILog* log)
-        : inBufferSize(inBufferSize)
+    explicit SessionHandlerOptions(size_t bufferSize, size_t bufferLimit, Kes::Log::ILog* log)
+        : bufferSize(bufferSize)
+        , bufferLimit(bufferLimit)
         , log(log)
     {}
 };
@@ -41,11 +43,14 @@ public:
     const std::string& peer() const noexcept { return m_peerAddr; }
 
 private:
+    void processJson(const char* json, size_t length);
+
     class ContinuousBuffer final
     {
     public:
-        explicit ContinuousBuffer(size_t size)
+        explicit ContinuousBuffer(size_t size, size_t limit)
             : m_buffer(size)
+            , m_limit(limit)
         {}
 
         ContinuousBuffer(const ContinuousBuffer&) = delete;
@@ -85,7 +90,7 @@ private:
                 return m_buffer.data() + m_start;
         }
 
-        void push(const char* data, size_t size)
+        bool push(const char* data, size_t size)
         {
             // have we got enough room?
             if (m_start + m_used + size > m_buffer.size())
@@ -100,12 +105,17 @@ private:
                 if (m_start + m_used + size > m_buffer.size())
                 {
                     // we have to enlarge the buffer
+                    if (m_start + m_used + size > m_limit)
+                        return false;
+
                     m_buffer.resize(m_start + m_used + size);
                 }
             }
 
-            std::memcpy(m_buffer.data() + m_start, data, size);
+            std::memcpy(m_buffer.data() + m_start + m_used, data, size);
             m_used += size;
+
+            return true;
         }
 
         size_t pop(size_t size) noexcept
@@ -119,15 +129,24 @@ private:
             return size;
         }
 
+        void reset() noexcept
+        {
+            m_start = 0;
+            m_used = 0;
+        }
+
     private:
         std::vector<char> m_buffer;
+        size_t m_limit;
         size_t m_start = 0;
         size_t m_used = 0;
     };
 
     SessionHandlerOptions m_options;
     std::string m_peerAddr;
-    ContinuousBuffer m_inBuffer;
+    ContinuousBuffer m_buffer;
+    size_t m_jsonDepth = 0;
+    size_t m_jsonDepthMax = 0;
 };
 
 

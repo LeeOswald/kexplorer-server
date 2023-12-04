@@ -41,6 +41,9 @@ Kes::Log::Level Logger::level() const noexcept
 
 bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noexcept
 {
+    if (level < m_level)
+        return true;
+
     try
     {
         va_list args1;
@@ -59,11 +62,11 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
         const char* strLevel = "?";
         switch (level)
         {
-        case Kes::Log::Level::Debug: strLevel = "D";
-        case Kes::Log::Level::Info: strLevel = "I";
-        case Kes::Log::Level::Warning: strLevel = "W";
-        case Kes::Log::Level::Error: strLevel = "E";
-        case Kes::Log::Level::Fatal: strLevel = "!";
+        case Kes::Log::Level::Debug: strLevel = "D"; break;
+        case Kes::Log::Level::Info: strLevel = "I"; break;
+        case Kes::Log::Level::Warning: strLevel = "W"; break;
+        case Kes::Log::Level::Error: strLevel = "E"; break;
+        case Kes::Log::Level::Fatal: strLevel = "!"; break;
         }
 
         // round nanoseconds to milliseconds
@@ -101,6 +104,9 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
 
 bool Logger::write(Kes::Log::Level level, const char* format, ...) noexcept
 {
+    if (level < m_level)
+        return true;
+
     va_list args;
     va_start(args, format);
 

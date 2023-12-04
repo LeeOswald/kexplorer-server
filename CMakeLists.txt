@@ -28,6 +28,7 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in config.h)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 
+add_subdirectory(kesctl)
 add_subdirectory(src)
