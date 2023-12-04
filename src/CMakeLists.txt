@@ -16,9 +16,13 @@ set(BOOST_LIBRARIES Boost::program_options)
 
 
 add_executable(${TARGET} 
+    iorunner.hxx
     logger.cxx
     logger.hxx
     main.cxx
+    sessionhandler.hxx
+    sessionhandler.cxx
+    tcpserver.hxx
 )
 
 

@@ -12,6 +12,10 @@
 #define KES_64 (UINT64_MAX == UINTPTR_MAX)
 
 // often-used platform headers
+#ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+#endif
+
 #include <errno.h>
 #include <signal.h>
 #include <sys/types.h>

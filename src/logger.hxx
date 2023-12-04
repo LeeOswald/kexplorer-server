@@ -10,7 +10,7 @@ namespace Private
 {
 
 
-class Logger
+class Logger final
     : public Kes::Log::ILog
 {
 public:

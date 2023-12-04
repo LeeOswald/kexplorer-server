@@ -56,6 +56,16 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
         struct timespec now = {};
         ::clock_gettime(CLOCK_REALTIME, &now);
 
+        const char* strLevel = "?";
+        switch (level)
+        {
+        case Kes::Log::Level::Debug: strLevel = "D";
+        case Kes::Log::Level::Info: strLevel = "I";
+        case Kes::Log::Level::Warning: strLevel = "W";
+        case Kes::Log::Level::Error: strLevel = "E";
+        case Kes::Log::Level::Fatal: strLevel = "!";
+        }
+
         // round nanoseconds to milliseconds
         long msec = 0;
         if (now.tv_nsec >= 999500000)
@@ -71,10 +81,10 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
         struct tm localNow = {};
         ::localtime_r(&now.tv_sec, &localNow);
 
-        char timeStr[256];
-        ::snprintf(timeStr, _countof(timeStr), "[%02d:%02d:%02d.%03d] ", localNow.tm_hour, localNow.tm_min, localNow.tm_sec, msec);
+        char prefix[256];
+        ::snprintf(prefix, _countof(prefix), "[%02d:%02d:%02d.%03d %s] ", localNow.tm_hour, localNow.tm_min, localNow.tm_sec, msec, strLevel);
 
-        std::string message = std::string(timeStr);
+        std::string message = std::string(prefix);
         message.append(formatted);
         message.append("\n");
 
