@@ -1,6 +1,8 @@
 #pragma once
 
 #include <export/log.hxx>
+#include <export/util/netutil.hxx>
+#include <export/util/readbuffer.hxx>
 
 #include <atomic>
 #include <mutex>
@@ -55,7 +57,7 @@ public:
         , m_io(io)
         , m_retryTimer(m_io)
         , m_strand(m_io)
-        , m_acceptor(m_io, endpointFromString(address))
+        , m_acceptor(m_io, Kes::Util::endpointFromString(address))
     {
         m_log->write(Kes::Log::Level::Debug, "TcpServer: starting");
 
@@ -187,48 +189,13 @@ private:
         }
 
     private:
-        class ReadBuffer final
-        {
-        public:
-            using Ptr = std::shared_ptr<ReadBuffer>;
-
-            explicit ReadBuffer(size_t size) noexcept
-                : m_buffers { std::vector<char>(size), std::vector<char>(size) }
-                , m_size(size)
-            {
-            }
-
-            ReadBuffer(const ReadBuffer&) = delete;
-            ReadBuffer& operator=(const ReadBuffer&) = delete;
-
-            ReadBuffer(ReadBuffer&&) = delete;
-            ReadBuffer& operator=(ReadBuffer&&) = delete;
-
-            static Ptr create(size_t size)
-            {
-                return std::make_shared<ReadBuffer>(size);
-            }
-
-            constexpr char* data(size_t index) noexcept { return m_buffers[index].data(); }
-            constexpr const char* data(size_t index) const noexcept { return m_buffers[index].data(); }
-            constexpr size_t size() const noexcept { return m_size; }
-            constexpr size_t w_index() const noexcept { return m_active; }
-            constexpr size_t r_index() const noexcept { return m_active ^ 1; }
-            constexpr void swap() noexcept { m_active ^= 1; }
-
-        private:
-            std::vector<char> m_buffers[2];
-            size_t m_size;
-            size_t m_active = 0;
-        };
-
-        bool read(ReadBuffer::Ptr buffer) noexcept
+        bool read(Kes::Util::ReadBuffer::Ptr buffer) noexcept
         {
             try
             {
                 if (!buffer)
                 {
-                    buffer = ReadBuffer::create(m_inBufferSize);
+                    buffer = Kes::Util::ReadBuffer::create(m_inBufferSize);
                 }
 
                 m_socket.async_read_some(
@@ -255,7 +222,7 @@ private:
             return true;
         }
 
-        void onRead(const boost::system::error_code& ec, size_t transferred, ReadBuffer::Ptr buffer) noexcept
+        void onRead(const boost::system::error_code& ec, size_t transferred, Kes::Util::ReadBuffer::Ptr buffer) noexcept
         {
             if (ec)
             {
@@ -266,7 +233,7 @@ private:
             }
             else
             {
-#if 1
+#if KES_DEBUG
                 m_log->write(Kes::Log::Level::Debug, "TcpServer: received  %d bytes", transferred);
 #endif
 
@@ -277,7 +244,7 @@ private:
 
                 // this MUST be noexcept
                 auto result = m_sessionHandler->process(buffer->data(buffer->r_index()), transferred);
-                if (!result)
+                if (!result.first)
                 {
                     // abort connection
                     close();
@@ -302,35 +269,6 @@ private:
         boost::asio::ip::tcp::socket m_socket;
         size_t m_id;
     };
-
-    static boost::asio::ip::tcp::endpoint endpointFromString(const std::string& s)
-    {
-        auto p0 = s.find_last_of('.');
-        auto p1 = s.find_last_of(':');
-        if ((p0 == s.npos) || (p1 == s.npos))
-            throw std::invalid_argument("Invalid server address:port pair");
-
-        std::string addressPart, portPart;
-        if (p1 > p0)
-        {
-            // IPv4 127.0.0.1:8080
-            addressPart = s.substr(0, p1);
-            portPart = s.substr(p1 + 1);
-        }
-        else if (p0 > p1)
-        {
-            // IPv6 ::1.8080
-            addressPart = s.substr(0, p0);
-            portPart = s.substr(p0 + 1);
-        }
-
-        auto address = boost::asio::ip::make_address(addressPart);
-        uint16_t port = uint16_t(std::strtoul(portPart.c_str(), nullptr, 10));
-        if (!port)
-            throw std::invalid_argument("Invalid server port");
-
-        return boost::asio::ip::tcp::endpoint(address, port);
-    }
 
     void accept() noexcept
     {

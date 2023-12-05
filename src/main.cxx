@@ -1,3 +1,5 @@
+#include <export/condition.hxx>
+
 #include "iorunner.hxx"
 #include "logger.hxx"
 #include "sessionhandler.hxx"
@@ -114,6 +116,8 @@ int main(int argc, char* argv[])
             bindAddr = vm["address"].as<std::string>();
         }
 
+        Kes::Condition exitCondition(false);
+
         std::unique_ptr<Kes::Private::IoRunner> runner(new  Kes::Private::IoRunner(2, &logger));
 
         auto& io = runner->io_context();
@@ -124,18 +128,20 @@ int main(int argc, char* argv[])
         signals.add(SIGHUP);
 
         signals.async_wait(
-            [&](boost::system::error_code /*ec*/, int /*signo*/)
+            [&exitCondition](boost::system::error_code /*ec*/, int /*signo*/)
             {
-                io.stop();
+                exitCondition.set();
             }
         );
 
         const size_t bufferSize = 65536;
         const size_t bufferLimit = 65536;
-        Kes::Private::SessionHandlerOptions sho(bufferSize, bufferLimit, &logger);
+        Kes::Private::SessionHandlerOptions sho(bufferSize, bufferLimit, &exitCondition, &logger);
         Kes::Private::TcpServer<Kes::Private::SessionHandler, Kes::Private::SessionHandlerOptions> server(runner->io_context(), sho, bindAddr.c_str(), bufferSize, &logger);
 
-        io.run();
+        exitCondition.wait();
+
+        io.stop();
     }
     catch (std::exception& e)
     {

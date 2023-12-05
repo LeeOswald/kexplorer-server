@@ -17,6 +17,7 @@ project(KernelExplorer-server VERSION ${KES_VERSION})
 
 set(KES_LINUX 0)
 
+set(CMAKE_CXX_STANDARD 20)
 set(KES_CXX_FEATURES cxx_std_20)
 
 if(UNIX AND NOT APPLE)
@@ -30,5 +31,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in config.h)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 
+add_subdirectory(export)
 add_subdirectory(kesctl)
 add_subdirectory(src)

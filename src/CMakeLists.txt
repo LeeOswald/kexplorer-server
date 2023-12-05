@@ -26,6 +26,6 @@ add_executable(${TARGET}
 )
 
 
-target_link_libraries(${TARGET} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES})
+target_link_libraries(${TARGET} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} kescommon)
 
 target_compile_features(${TARGET} PUBLIC ${KES_CXX_FEATURES})
