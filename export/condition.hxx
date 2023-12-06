@@ -23,6 +23,12 @@ public:
     {
     }
 
+    Condition(const Condition&) = delete;
+    Condition& operator=(const Condition&) = delete;
+
+    Condition(Condition&&) = delete;
+    Condition& operator=(Condition&&) = delete;
+
     void set() noexcept
     {
         {
@@ -47,13 +53,21 @@ public:
         std::unique_lock l(m_mutex);
 
         m_cv.wait(l, [this]() { return m_signaled; });
+
+        if (m_autoReset)
+            m_signaled = false;
     }
 
     bool wait(std::chrono::milliseconds duration) noexcept
     {
         std::unique_lock l(m_mutex);
 
-        return m_cv.wait_for(l, duration, [this]() { return m_signaled; });
+        auto success = m_cv.wait_for(l, duration, [this]() { return m_signaled; });
+
+        if (m_autoReset)
+            m_signaled = false;
+
+        return success;
     }
 
 private:

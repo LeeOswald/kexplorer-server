@@ -1,7 +1,8 @@
 set(TARGET kescommon)
 
-add_library(${TARGET}
+add_library(${TARGET} SHARED
     condition.hxx
+    exception.hxx
     json.hxx
     log.hxx
     platform.hxx
@@ -9,6 +10,8 @@ add_library(${TARGET}
     util/netutil.cxx
     util/netutil.hxx
     util/readbuffer.hxx
+    util/request.cxx
+    util/request.hxx
 )
 
 

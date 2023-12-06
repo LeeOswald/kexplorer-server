@@ -2,6 +2,7 @@
 
 #include "iorunner.hxx"
 #include "logger.hxx"
+#include "requestprocessor.hxx"
 #include "sessionhandler.hxx"
 #include "tcpserver.hxx"
 
@@ -134,9 +135,11 @@ int main(int argc, char* argv[])
             }
         );
 
+        Kes::Private::RequestProcessor requestProcessor(&exitCondition, &logger);
+
         const size_t bufferSize = 65536;
         const size_t bufferLimit = 65536;
-        Kes::Private::SessionHandlerOptions sho(bufferSize, bufferLimit, &exitCondition, &logger);
+        Kes::Private::SessionHandlerOptions sho(bufferSize, bufferLimit, &requestProcessor, &logger);
         Kes::Private::TcpServer<Kes::Private::SessionHandler, Kes::Private::SessionHandlerOptions> server(runner->io_context(), sho, bindAddr.c_str(), bufferSize, &logger);
 
         exitCondition.wait();

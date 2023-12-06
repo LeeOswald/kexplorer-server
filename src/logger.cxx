@@ -1,5 +1,7 @@
 #include "logger.hxx"
 
+#include <export/exception.hxx>
+
 #include <fcntl.h>
 #include <sys/file.h>
 #include <time.h>
@@ -28,7 +30,7 @@ Logger::Logger(Kes::Log::Level level, const char* fileName)
         ::close(m_file);
 
         if (errno == EWOULDBLOCK)
-            throw std::runtime_error("Server is already running");
+            throw Exception("Server is already running");
 
         throw std::system_error(std::error_code(errno, std::system_category()), "Failed to lock the logfile");
     }

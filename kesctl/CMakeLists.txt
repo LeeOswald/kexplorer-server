@@ -14,11 +14,10 @@ set(BOOST_LIBRARIES Boost::program_options)
 add_executable(${TARGET} 
     client.cxx
     client.hxx
-    commands.hxx
     main.cxx
 )
 
 
-target_link_libraries(${TARGET} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES})
+target_link_libraries(${TARGET} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} kescommon)
 
 target_compile_features(${TARGET} PUBLIC ${KES_CXX_FEATURES})

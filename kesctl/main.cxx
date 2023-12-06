@@ -1,5 +1,6 @@
 #include "client.hxx"
-#include "commands.hxx"
+
+#include <export/util/request.hxx>
 
 #include <iostream>
 
@@ -51,7 +52,7 @@ int main(int argc, char* argv[])
             ("help,h", "display this message")
             ("verbose,v", "display debug output")
             ("address,a", po::value<std::string>(), "server address:port")
-            ("command,c", po::value<std::string>(), "command to execute")
+            ("stop", "stop the server")
         ;
 
         po::variables_map vm;
@@ -91,10 +92,9 @@ int main(int argc, char* argv[])
 
         Kesctl::Client client(io, endpoint.first.c_str(), endpoint.second, verbose, std::cout, std::cerr);
 
-        if (vm.count("command") > 0)
+        if (vm.count("stop") > 0)
         {
-            auto command = vm["command"].as<std::string>();
-            auto response = client.command(Kesctl::simpleCommand(command));
+            auto response = client.command(Kes::Util::Request::stop());
 
             std::cout << response << "\n";
         }

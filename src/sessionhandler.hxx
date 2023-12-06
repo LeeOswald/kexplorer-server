@@ -1,6 +1,5 @@
 #pragma once
 
-#include <export/condition.hxx>
 #include <export/log.hxx>
 #include <export/util/continuousbuffer.hxx>
 
@@ -11,18 +10,20 @@ namespace Kes
 namespace Private
 {
 
+class RequestProcessor;
+
 
 struct SessionHandlerOptions
 {
     size_t bufferSize;
     size_t bufferLimit;
-    Kes::Condition* exit;
+    RequestProcessor* requestProcessor;
     Kes::Log::ILog* log;
 
-    explicit SessionHandlerOptions(size_t bufferSize, size_t bufferLimit, Kes::Condition* exit, Kes::Log::ILog* log)
+    explicit SessionHandlerOptions(size_t bufferSize, size_t bufferLimit, RequestProcessor* requestProcessor, Kes::Log::ILog* log)
         : bufferSize(bufferSize)
         , bufferLimit(bufferLimit)
-        , exit(exit)
+        , requestProcessor(requestProcessor)
         , log(log)
     {}
 };
@@ -45,8 +46,6 @@ public:
     const std::string& peer() const noexcept { return m_peerAddr; }
 
 private:
-    std::string processJson(const char* json, size_t length);
-
     SessionHandlerOptions m_options;
     std::string m_peerAddr;
     Kes::Util::ContinuousBuffer m_buffer;

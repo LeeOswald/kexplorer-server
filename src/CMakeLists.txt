@@ -20,8 +20,10 @@ add_executable(${TARGET}
     logger.cxx
     logger.hxx
     main.cxx
-    sessionhandler.hxx
+    requestprocessor.cxx
+    requestprocessor.hxx
     sessionhandler.cxx
+    sessionhandler.hxx
     tcpserver.hxx
 )
 
