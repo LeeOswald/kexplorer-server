@@ -106,6 +106,7 @@ private:
             const SessionHandlerArgs& sessionHandlerArgs,
             size_t inBufferSize,
             boost::asio::io_context& io,
+            std::shared_ptr<boost::asio::ip::tcp::socket> socket,
             Kes::Log::ILog* log
             )
             : m_owner(owner)
@@ -114,9 +115,10 @@ private:
             , m_log(log)
             , m_io(io)
             , m_strand(io)
-            , m_socket(io)
+            , m_socket(socket)
             , m_id(makeNextId())
         {
+            m_log->write(Kes::Log::Level::Debug, "TcpServer: session %d created", m_id);
         }
 
         static Ptr create(
@@ -124,6 +126,7 @@ private:
             const SessionHandlerArgs& sessionHandlerArgs,
             size_t inBufferSize,
             boost::asio::io_context& io,
+            std::shared_ptr<boost::asio::ip::tcp::socket> socket,
             Kes::Log::ILog* log
         ) noexcept
         {
@@ -134,6 +137,7 @@ private:
                     sessionHandlerArgs,
                     inBufferSize,
                     io,
+                    socket,
                     log
                 );
             }
@@ -144,8 +148,6 @@ private:
             }
         }
 
-        boost::asio::ip::tcp::socket& socket() noexcept { return m_socket; }
-
         void close() noexcept
         {
             if (m_sessionHandler)
@@ -153,11 +155,11 @@ private:
                 m_sessionHandler->close();
             }
 
-            if (m_socket.is_open())
+            if (m_socket->is_open())
             {
                 boost::system::error_code ec;
-                m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_send);
-                m_socket.close();
+                m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_send);
+                m_socket->close();
             }
         }
 
@@ -165,7 +167,7 @@ private:
         {
             try
             {
-                auto peer = m_socket.remote_endpoint();
+                auto peer = m_socket->remote_endpoint();
                 auto peerAddr = peer.address().to_string();
 
                 m_sessionHandler.reset(new SessionHandler(m_sessionHandlerArgs, peerAddr));
@@ -198,7 +200,7 @@ private:
                     buffer = Kes::Util::ReadBuffer::create(m_inBufferSize);
                 }
 
-                m_socket.async_read_some(
+                m_socket->async_read_some(
                     boost::asio::buffer(buffer->data(buffer->w_index()), buffer->size()),
                     m_strand.wrap(
                         [this, buffer](const boost::system::error_code& ec, size_t transferred)
@@ -262,7 +264,7 @@ private:
             try
             {
                 boost::asio::async_write(
-                    m_socket,
+                    *m_socket,
                     boost::asio::const_buffer(buffer->data(), buffer->size()),
                     m_strand.wrap(
                         [this](const boost::system::error_code& ec, size_t transferred)
@@ -311,40 +313,25 @@ private:
         Kes::Log::ILog* m_log;
         boost::asio::io_context& m_io;
         boost::asio::io_service::strand m_strand;
-        boost::asio::ip::tcp::socket m_socket;
+        std::shared_ptr<boost::asio::ip::tcp::socket> m_socket;
         size_t m_id;
     };
 
     void accept() noexcept
     {
-        auto session = Session::create(this, m_sessionHandlerArgs, m_inBufferSize, m_io, m_log);
-        if (!session)
-        {
-            // retry after 1 second
-            m_retryTimer.expires_from_now(boost::posix_time::milliseconds(1000));
-            m_retryTimer.async_wait(
-                [this](const boost::system::error_code& e)
-                {
-                    if (!e && !m_stop)
-                        accept();
-                }
-            );
-
-            return;
-        }
-
+        auto socket = std::make_shared<boost::asio::ip::tcp::socket>(m_io);
         m_acceptor.async_accept(
-            session->socket(),
+            *socket,
             m_strand.wrap(
-                [this, session](const boost::system::error_code& ec)
+                [this, socket](const boost::system::error_code& ec)
                 {
-                    onAccept(session, ec);
+                    onAccept(socket, ec);
                 }
             )
         );
     }
 
-    void onAccept(Session::Ptr session, const boost::system::error_code& ec) noexcept
+    void onAccept(std::shared_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code& ec) noexcept
     {
         if (m_stop)
             return;
@@ -371,6 +358,7 @@ private:
             // continue accepting clients
             accept();
 
+            auto session = Session::create(this, m_sessionHandlerArgs, m_inBufferSize, m_io, socket, m_log);
             {
                 std::lock_guard l(m_mutex);
                 m_sessions.push_back(session);

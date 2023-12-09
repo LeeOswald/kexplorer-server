@@ -170,6 +170,8 @@ void Client::onRead(const boost::system::error_code& ec, size_t transferred, Kes
 
         if (!process(buffer->data(buffer->r_index()), transferred)) // want more data
             read(buffer);
+        else
+            m_io.stop();
     }
 }
 
