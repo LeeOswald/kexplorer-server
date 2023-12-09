@@ -11,9 +11,19 @@ namespace Util
 namespace Request
 {
 
-std::string stop()
+std::string simple(const char* command)
 {
-    return std::string("{\"request\":\"stop\"}");
+    Json::Document doc;
+    auto a = doc.GetAllocator();
+
+    doc.SetObject();
+    doc.AddMember("request", Json::Value(command, a), a);
+
+    Json::StringBuffer sb;
+    Json::Writer<Json::StringBuffer> writer(sb);
+    doc.Accept(writer);
+
+    return sb.GetString();
 }
 
 } // namespace Request {}
@@ -23,7 +33,18 @@ namespace Response
 
 std::string fail(const char* reason)
 {
-    return std::string("{\"status\":\"fail\",\"reason\"=\"") + std::string(reason) + std::string("\"}");
+    Json::Document doc;
+    auto a = doc.GetAllocator();
+
+    doc.SetObject();
+    doc.AddMember("status", Json::Value("fail", a), a);
+    doc.AddMember("reason", Json::Value(reason, a), a);
+
+    Json::StringBuffer sb;
+    Json::Writer<Json::StringBuffer> writer(sb);
+    doc.Accept(writer);
+
+    return sb.GetString();
 }
 
 

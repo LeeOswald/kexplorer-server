@@ -3,6 +3,7 @@
 #include <export/platform.hxx>
 
 #include <rapidjson/document.h>
+#include <rapidjson/writer.h>
 
 
 namespace Kes

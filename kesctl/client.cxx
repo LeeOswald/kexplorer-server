@@ -1,5 +1,7 @@
 #include "client.hxx"
 
+#include <export/exception.hxx>
+
 #include <sstream>
 
 
@@ -21,6 +23,7 @@ Client::Client(boost::asio::io_context& io, const char* addr, uint16_t port, boo
     , m_verbose(verbose)
     , m_cout(cout)
     , m_cerr(cerr)
+    , m_bufferIn(kBufferSize, kBufferLimit)
 {
     // resolve server address
     boost::asio::ip::tcp::resolver resolver(m_io);
@@ -29,7 +32,7 @@ Client::Client(boost::asio::io_context& io, const char* addr, uint16_t port, boo
     auto results = resolver.resolve(query, ec);
     if (ec)
     {
-        throw std::runtime_error(std::string("Failed to ") + ec.message());
+        throw Kes::Exception(std::string("Failed to resolve the server address: ") + ec.message());
     }
 
     for (auto& r : results)
@@ -39,6 +42,11 @@ Client::Client(boost::asio::io_context& io, const char* addr, uint16_t port, boo
 
         m_endpoints.push_back(boost::asio::ip::tcp::endpoint(r.endpoint().address(), port));
     }
+}
+
+void Client::stop() noexcept
+{
+    m_stop = true;
 }
 
 bool Client::checkConnection() noexcept
@@ -72,78 +80,176 @@ bool Client::checkConnection() noexcept
     return false;
 }
 
-std::string Client::command(const std::string& cmd)
+void Client::command(const std::string& cmd)
 {
+    if (m_stop)
+        return;
+
+    reset();
+
     if (!checkConnection())
     {
-        throw std::runtime_error("Unable to connect to the server");
+        throw Kes::Exception("Unable to connect to the server");
     }
 
     if (m_verbose)
         m_cout << cmd << "\n";
 
-    send(cmd);
-
-    return receive();
+    write(std::make_shared<std::string>(std::move(cmd)));
 }
 
-void Client::send(const std::string& data)
+void Client::write(std::shared_ptr<std::string> data) noexcept
 {
-    auto p = data.data();
-    auto size = data.length();
+    if (m_verbose)
+        m_cout << "Sending " << data->size() << " bytes\n";
 
-    while (size)
+    boost::asio::async_write(
+        *m_socket,
+        boost::asio::const_buffer(data->data(), data->size()),
+        [this, data](const boost::system::error_code& ec, size_t transferred)
+        {
+            this->onWrite(ec, transferred, data);
+        }
+    );
+}
+
+void Client::onWrite(const boost::system::error_code& ec, size_t transferred, std::shared_ptr<std::string> data) noexcept
+{
+    if (ec)
+    {
+        m_cerr << "write() failed: " << ec.message() << "\n";
+    }
+    else
     {
         if (m_verbose)
-            m_cout << "Sending " << size << " bytes\n";
+            m_cout << "    Sent " << transferred << " bytes\n";
 
-        boost::system::error_code ec;
-        auto written = m_socket->write_some(boost::asio::const_buffer(p, size), ec);
+        if (m_stop)
+            return;
 
-        if (ec)
-        {
-            throw std::runtime_error(std::string("Failed to send the data: ") + ec.message());
-        }
-
-        if (m_verbose)
-            m_cout << "    Sent " << written << " bytes\n";
-
-        assert(size >= written);
-        size -= written;
-        p += written;
+        read(Kes::Util::ReadBuffer::Ptr());
     }
 }
 
-std::string Client::receive()
+void Client::read(Kes::Util::ReadBuffer::Ptr buffer) noexcept
 {
-    std::ostringstream result;
-    std::vector<char> buffer(65536);
-
-    do
+    try
     {
-        if (m_verbose)
-            m_cout << "Receiving...\n";
-
-        boost::system::error_code ec;
-        auto received = m_socket->read_some(boost::asio::buffer(buffer), ec);
-
-        if (ec)
+        if (!buffer)
         {
-            m_cerr << "Failed to receive the data: " << ec.message() << "\n";
-            break;
+            buffer = Kes::Util::ReadBuffer::create(kBufferSize);
         }
 
+        m_socket->async_read_some(
+            boost::asio::buffer(buffer->data(buffer->w_index()), buffer->size()),
+            [this, buffer](const boost::system::error_code& ec, size_t transferred)
+            {
+                this->onRead(ec, transferred, buffer);
+            }
+        );
+
+    }
+    catch (std::exception& e)
+    {
+        m_cerr << "Failed to receive data: " << e.what() << "\n";
+    }
+}
+
+void Client::onRead(const boost::system::error_code& ec, size_t transferred, Kes::Util::ReadBuffer::Ptr buffer) noexcept
+{
+    if (ec)
+    {
+        m_cerr << "read() failed: " << ec.message() << "\n";
+    }
+    else
+    {
         if (m_verbose)
-            m_cout << "    Received " << received << " bytes\n";
+            m_cout << "Received " << transferred << " bytes\n";
 
-        if (received)
-            result << std::string_view(buffer.data(), received);
-        else
-            break;
+        buffer->swap();
 
-    } while (true);
+        if (!process(buffer->data(buffer->r_index()), transferred)) // want more data
+            read(buffer);
+    }
+}
 
-    return result.str();
+bool Client::process(const char* data, size_t size) noexcept
+{
+    try
+    {
+        auto posPrev = m_bufferIn.used();
+
+        if (!m_bufferIn.push(data, size))
+            throw Kes::Exception("Packet size exceeds limit");
+
+        auto posCur = m_bufferIn.used();
+
+        if (posCur == posPrev)
+        {
+            // nothing to process, request moar data
+            return false;
+        }
+
+        auto cur = m_bufferIn.data() + posPrev;
+        auto end = m_bufferIn.data() + posCur;
+        while (cur < end)
+        {
+            if (*cur == '{')
+            {
+                ++m_jsonDepth;
+                if (m_jsonDepth > m_jsonDepthMax)
+                    m_jsonDepthMax = m_jsonDepth;
+            }
+            else if (*cur == '}')
+            {
+                if (m_jsonDepth == 0)
+                    throw Kes::Exception("Invalid JSON");
+
+                --m_jsonDepth;
+            }
+
+            ++cur;
+        }
+
+        if (m_jsonDepth == 0)
+        {
+            // JSON complete
+            if (m_jsonDepthMax == 0)
+            {
+                // nothing to process, request moar data
+                return false;
+            }
+
+            m_bufferIn.push("", 1); // append '\0'
+
+            processJson(m_bufferIn.data(), posCur);
+
+            m_bufferIn.pop(posCur + 1); // also pop '\0'
+            m_jsonDepthMax = 0;
+
+            return true; // no more data needed
+        }
+    }
+    catch (std::exception& e)
+    {
+        m_cerr << "Failed to process the response: " << e.what() << "\n";
+        return true;
+    }
+
+    // more data needed
+    return false;
+}
+
+void Client::processJson(const char* data, size_t size)
+{
+    m_cout << std::string_view(data, size) << "\n";
+}
+
+void Client::reset() noexcept
+{
+    m_jsonDepth = 0;
+    m_jsonDepthMax = 0;
+    m_bufferIn.reset();
 }
 
 } // namespace Kesctl {}

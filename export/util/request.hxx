@@ -12,7 +12,7 @@ namespace Util
 namespace Request
 {
 
-std::string stop();
+std::string simple(const char* command);
 
 } // namespace Request {}
 

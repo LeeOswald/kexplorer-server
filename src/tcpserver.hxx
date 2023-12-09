@@ -250,6 +250,51 @@ private:
                     close();
                     m_owner->removeSession(m_id);
                 }
+                else
+                {
+                    write(std::make_shared<std::string>(std::move(result.second)));
+                }
+            }
+        }
+
+        void write(std::shared_ptr<std::string> buffer) noexcept
+        {
+            try
+            {
+                boost::asio::async_write(
+                    m_socket,
+                    boost::asio::const_buffer(buffer->data(), buffer->size()),
+                    m_strand.wrap(
+                        [this](const boost::system::error_code& ec, size_t transferred)
+                        {
+                            this->onWrite(ec, transferred);
+                        }
+                    )
+                );
+            }
+            catch (std::exception& e)
+            {
+                m_log->write(Kes::Log::Level::Error, "TcpServer: failed to send data: %s", e.what());
+
+                close();
+                m_owner->removeSession(m_id);
+            }
+        }
+
+        void onWrite(const boost::system::error_code& ec, size_t transferred) noexcept
+        {
+            if (ec)
+            {
+                m_log->write(Kes::Log::Level::Error, "TcpServer: write() failed: %s", ec.message().c_str());
+
+                close();
+                m_owner->removeSession(m_id);
+            }
+            else
+            {
+#if KES_DEBUG
+                m_log->write(Kes::Log::Level::Debug, "TcpServer: sent  %d bytes", transferred);
+#endif
             }
         }
 

@@ -15,7 +15,9 @@ endif()
 set(BOOST_LIBRARIES Boost::program_options)
 
 
-add_executable(${TARGET} 
+add_executable(${TARGET}
+    globalcmdhandler.cxx
+    globalcmdhandler.hxx
     iorunner.hxx
     logger.cxx
     logger.hxx

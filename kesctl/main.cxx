@@ -1,45 +1,12 @@
 #include "client.hxx"
 
+#include <export/util/netutil.hxx>
 #include <export/util/request.hxx>
 
 #include <iostream>
 
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
-
-namespace
-{
-
-std::pair<std::string, uint16_t> endpointFromString(const std::string& s)
-{
-    auto p0 = s.find_last_of('.');
-    auto p1 = s.find_last_of(':');
-    if ((p0 == s.npos) || (p1 == s.npos))
-        throw std::invalid_argument("Invalid server address:port pair");
-
-    std::string addressPart, portPart;
-    if (p1 > p0)
-    {
-        // IPv4 127.0.0.1:8080
-        addressPart = s.substr(0, p1);
-        portPart = s.substr(p1 + 1);
-    }
-    else if (p0 > p1)
-    {
-        // IPv6 ::1.8080
-        addressPart = s.substr(0, p0);
-        portPart = s.substr(p0 + 1);
-    }
-
-    uint16_t port = uint16_t(std::strtoul(portPart.c_str(), nullptr, 10));
-    if (!port)
-        throw std::invalid_argument("Invalid server port");
-
-    return std::make_pair(addressPart, port);
-}
-
-
-} // namespace {}
 
 
 int main(int argc, char* argv[])
@@ -52,7 +19,7 @@ int main(int argc, char* argv[])
             ("help,h", "display this message")
             ("verbose,v", "display debug output")
             ("address,a", po::value<std::string>(), "server address:port")
-            ("stop", "stop the server")
+            ("command,c", po::value<std::string>(), "execute command")
         ;
 
         po::variables_map vm;
@@ -75,6 +42,10 @@ int main(int argc, char* argv[])
 
         boost::asio::io_context io;
 
+        auto endpoint = Kes::Util::splitAddress(addr);
+
+        Kesctl::Client client(io, endpoint.first.c_str(), endpoint.second, verbose, std::cout, std::cerr);
+
         boost::asio::signal_set signals(io);
         signals.add(SIGINT);
         signals.add(SIGTERM);
@@ -82,22 +53,21 @@ int main(int argc, char* argv[])
         signals.add(SIGHUP);
 
         signals.async_wait(
-            [&](boost::system::error_code /*ec*/, int /*signo*/)
+            [&io, &client](boost::system::error_code /*ec*/, int /*signo*/)
             {
+                client.stop();
                 io.stop();
             }
         );
 
-        auto endpoint = endpointFromString(addr);
 
-        Kesctl::Client client(io, endpoint.first.c_str(), endpoint.second, verbose, std::cout, std::cerr);
-
-        if (vm.count("stop") > 0)
+        if (vm.count("command") > 0)
         {
-            auto response = client.command(Kes::Util::Request::stop());
-
-            std::cout << response << "\n";
+            auto cmd = vm["command"].as<std::string>();
+            client.command(Kes::Util::Request::simple(cmd.c_str()));
         }
+
+        io.run();
     }
     catch (std::exception& e)
     {

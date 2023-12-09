@@ -1,5 +1,6 @@
 #include <export/condition.hxx>
 
+#include "globalcmdhandler.hxx"
 #include "iorunner.hxx"
 #include "logger.hxx"
 #include "requestprocessor.hxx"
@@ -119,7 +120,8 @@ int main(int argc, char* argv[])
 
         Kes::Condition exitCondition(false);
 
-        std::unique_ptr<Kes::Private::IoRunner> runner(new  Kes::Private::IoRunner(2, &logger));
+        const size_t threadCount = 1;
+        std::unique_ptr<Kes::Private::IoRunner> runner(new  Kes::Private::IoRunner(threadCount, &logger));
 
         auto& io = runner->io_context();
         boost::asio::signal_set signals(io);
@@ -128,14 +130,27 @@ int main(int argc, char* argv[])
         signals.add(SIGPIPE);
         signals.add(SIGHUP);
 
+        std::optional<int> signalReceived;
+
         signals.async_wait(
-            [&exitCondition](boost::system::error_code /*ec*/, int /*signo*/)
+            [&exitCondition, &signalReceived, &logger]([[maybe_unused]] boost::system::error_code ec, [[maybe_unused]] int signo)
             {
-                exitCondition.set();
+                if (!ec)
+                {
+                    signalReceived = signo;
+                    exitCondition.set();
+                }
+                else
+                {
+                    logger.write(Kes::Log::Level::Error, "Failed to wait for signals: %s", ec.message().c_str());
+                }
             }
         );
 
-        Kes::Private::RequestProcessor requestProcessor(&exitCondition, &logger);
+        Kes::Private::RequestProcessor requestProcessor(&logger);
+        Kes::Private::GlobalCmdHandler globalHandler(exitCondition, &logger);
+        requestProcessor.registerHandler("stop", &globalHandler);
+        requestProcessor.registerHandler("version", &globalHandler);
 
         const size_t bufferSize = 65536;
         const size_t bufferLimit = 65536;
@@ -143,6 +158,10 @@ int main(int argc, char* argv[])
         Kes::Private::TcpServer<Kes::Private::SessionHandler, Kes::Private::SessionHandlerOptions> server(runner->io_context(), sho, bindAddr.c_str(), bufferSize, &logger);
 
         exitCondition.wait();
+        if (signalReceived)
+        {
+            logger.write(Kes::Log::Level::Warning, "Exiting due to signal %d", *signalReceived);
+        }
 
         io.stop();
     }

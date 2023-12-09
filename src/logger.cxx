@@ -6,6 +6,8 @@
 #include <sys/file.h>
 #include <time.h>
 
+#include <iostream>
+
 namespace Kes
 {
 
@@ -92,6 +94,10 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
         std::string message = std::string(prefix);
         message.append(formatted);
         message.append("\n");
+
+#if 1
+        std::cout << message;
+#endif
 
         ::write(m_file, message.data(), message.length());
         ::fsync(m_file);
