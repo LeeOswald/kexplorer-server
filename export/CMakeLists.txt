@@ -1,6 +1,4 @@
-set(TARGET kescommon)
-
-add_library(${TARGET} SHARED
+add_library(${KES_COMMON} SHARED
     condition.hxx
     exception.hxx
     json.hxx
@@ -17,4 +15,4 @@ add_library(${TARGET} SHARED
 
 add_compile_definitions(KES_COMMON_EXPORTS=1)
 
-target_compile_features(${TARGET} PUBLIC ${KES_CXX_FEATURES})
+target_compile_features(${KES_COMMON} PUBLIC ${KES_CXX_FEATURES})

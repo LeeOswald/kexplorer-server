@@ -10,7 +10,7 @@ namespace Kes
 namespace Private
 {
 
-std::string RequestProcessor::process(const char* request, size_t length)
+std::string RequestProcessor::process(uint32_t sessionId, const char* request, size_t length)
 {
     try
     {
@@ -46,7 +46,7 @@ std::string RequestProcessor::process(const char* request, size_t length)
                 for (auto it = range.first; it != range.second; ++it)
                 {
                     auto handler = it->second;
-                    handler->process(key, docRequest, docResponse);
+                    handler->process(sessionId, key, docRequest, docResponse);
                     handlerFound = true;
                 }
             }
@@ -104,6 +104,25 @@ void RequestProcessor::unregisterHandler(const char* key, IRequestHandler* handl
     m_log->write(Log::Level::Error, "RequestProcessor: no handlers registered for %s", key);
 }
 
+void RequestProcessor::startSession(uint32_t id)
+{
+    std::lock_guard l(m_mutex);
+
+    for (auto it = m_handlers.begin(); it != m_handlers.end(); ++it)
+    {
+        it->second->startSession(id);
+    }
+}
+
+void RequestProcessor::endSession(uint32_t id)
+{
+    std::lock_guard l(m_mutex);
+
+    for (auto it = m_handlers.begin(); it != m_handlers.end(); ++it)
+    {
+        it->second->endSession(id);
+    }
+}
 
 } // namespace Private {}
 

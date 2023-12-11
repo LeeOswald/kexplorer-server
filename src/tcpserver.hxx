@@ -70,7 +70,7 @@ public:
     TcpServer(TcpServer&&) = delete;
     TcpServer& operator=(TcpServer&&) = delete;
 
-    void removeSession(size_t id) noexcept
+    void removeSession(uint32_t id) noexcept
     {
         std::lock_guard l(m_mutex);
 
@@ -163,14 +163,14 @@ private:
             }
         }
 
-        std::optional<size_t> start() noexcept
+        std::optional<uint32_t> start() noexcept
         {
             try
             {
                 auto peer = m_socket->remote_endpoint();
                 auto peerAddr = peer.address().to_string();
 
-                m_sessionHandler.reset(new SessionHandler(m_sessionHandlerArgs, peerAddr));
+                m_sessionHandler.reset(new SessionHandler(m_sessionHandlerArgs, peerAddr, m_id));
 
                 read(nullptr);
 
@@ -185,7 +185,7 @@ private:
             return m_id;
         }
 
-        size_t id() const noexcept
+        uint32_t id() const noexcept
         {
             return m_id;
         }
@@ -300,9 +300,9 @@ private:
             }
         }
 
-        static size_t makeNextId() noexcept
+        static uint32_t makeNextId() noexcept
         {
-            static std::atomic<size_t> nextId = 0;
+            static std::atomic<uint32_t> nextId = 0;
             return nextId++;
         }
 
@@ -314,7 +314,7 @@ private:
         boost::asio::io_context& m_io;
         boost::asio::io_service::strand m_strand;
         std::shared_ptr<boost::asio::ip::tcp::socket> m_socket;
-        size_t m_id;
+        uint32_t m_id;
     };
 
     void accept() noexcept

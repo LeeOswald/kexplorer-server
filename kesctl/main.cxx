@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
         signals.add(SIGHUP);
 
         signals.async_wait(
-            [&io, &client](boost::system::error_code /*ec*/, int /*signo*/)
+            [&io, &client]([[maybe_unused]] boost::system::error_code ec, [[maybe_unused]] int signo)
             {
                 client.stop();
                 io.stop();

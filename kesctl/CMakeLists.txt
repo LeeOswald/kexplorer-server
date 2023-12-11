@@ -1,23 +1,10 @@
-set(TARGET kexplorer-ctl)
-
-# require Boost
-find_package(Boost REQUIRED COMPONENTS system program_options)
-
-if(Boost_FOUND)
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIRS})
-endif()
-
-set(BOOST_LIBRARIES Boost::program_options)
-
-
-add_executable(${TARGET} 
+add_executable(${KES_CTL} 
     client.cxx
     client.hxx
     main.cxx
 )
 
 
-target_link_libraries(${TARGET} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} kescommon)
+target_link_libraries(${KES_CTL} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} ${KES_COMMON})
 
-target_compile_features(${TARGET} PUBLIC ${KES_CXX_FEATURES})
+target_compile_features(${KES_CTL} PUBLIC ${KES_CXX_FEATURES})

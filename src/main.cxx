@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
         std::optional<int> signalReceived;
 
         signals.async_wait(
-            [&exitCondition, &signalReceived, &logger]([[maybe_unused]] boost::system::error_code ec, [[maybe_unused]] int signo)
+            [&exitCondition, &signalReceived, &logger](boost::system::error_code ec, int signo)
             {
                 if (!ec)
                 {
@@ -148,9 +148,7 @@ int main(int argc, char* argv[])
         );
 
         Kes::Private::RequestProcessor requestProcessor(&logger);
-        Kes::Private::GlobalCmdHandler globalHandler(exitCondition, &logger);
-        requestProcessor.registerHandler("stop", &globalHandler);
-        requestProcessor.registerHandler("version", &globalHandler);
+        Kes::Private::GlobalCmdHandler globalHandler(&requestProcessor, exitCondition, &logger);
 
         const size_t bufferSize = 65536;
         const size_t bufferLimit = 65536;

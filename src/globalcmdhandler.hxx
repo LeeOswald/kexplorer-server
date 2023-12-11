@@ -15,15 +15,8 @@ class GlobalCmdHandler final
     : public IRequestHandler
 {
 public:
-    ~GlobalCmdHandler()
-    {
-    }
-    
-    explicit GlobalCmdHandler(Condition& exitCondition, Log::ILog* log)
-        : m_exitCondition(exitCondition)
-        , m_log(log)
-    {
-    }
+    ~GlobalCmdHandler();
+    explicit GlobalCmdHandler(IRequestProcessor* rp, Condition& exitCondition, Log::ILog* log);
 
     GlobalCmdHandler(const GlobalCmdHandler&) = delete;
     GlobalCmdHandler& operator=(const GlobalCmdHandler&) = delete;
@@ -31,9 +24,12 @@ public:
     GlobalCmdHandler(GlobalCmdHandler&&) = delete;
     GlobalCmdHandler& operator=(GlobalCmdHandler&&) = delete;
     
-    bool process(const char* key, const Json::Document& request, Json::Document& response) override;
+    bool process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response) override;
+    void startSession(uint32_t id) override;
+    void endSession(uint32_t id) override;
 
 private:
+    IRequestProcessor* m_rp;
     Condition& m_exitCondition;
     Log::ILog* m_log;
 };

@@ -2,7 +2,7 @@
 
 #include <export/log.hxx>
 #include <export/util/continuousbuffer.hxx>
-
+#include <kesrv/kesrv.hxx>
 
 namespace Kes
 {
@@ -10,17 +10,15 @@ namespace Kes
 namespace Private
 {
 
-class RequestProcessor;
-
 
 struct SessionHandlerOptions
 {
     size_t bufferSize;
     size_t bufferLimit;
-    RequestProcessor* requestProcessor;
+    IRequestProcessor* requestProcessor;
     Kes::Log::ILog* log;
 
-    explicit SessionHandlerOptions(size_t bufferSize, size_t bufferLimit, RequestProcessor* requestProcessor, Kes::Log::ILog* log)
+    explicit SessionHandlerOptions(size_t bufferSize, size_t bufferLimit, IRequestProcessor* requestProcessor, Kes::Log::ILog* log)
         : bufferSize(bufferSize)
         , bufferLimit(bufferLimit)
         , requestProcessor(requestProcessor)
@@ -33,7 +31,7 @@ class SessionHandler final
 {
 public:
     ~SessionHandler();
-    explicit SessionHandler(const SessionHandlerOptions& options, const std::string& peerAddr);
+    explicit SessionHandler(const SessionHandlerOptions& options, const std::string& peerAddr, uint32_t id);
 
     SessionHandler(const SessionHandler&) = delete;
     SessionHandler& operator=(const SessionHandler&) = delete;
@@ -48,6 +46,7 @@ public:
 private:
     SessionHandlerOptions m_options;
     std::string m_peerAddr;
+    uint32_t m_id;
     Kes::Util::ContinuousBuffer m_buffer;
     size_t m_jsonDepth = 0;
     size_t m_jsonDepthMax = 0;

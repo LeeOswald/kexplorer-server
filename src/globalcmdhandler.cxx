@@ -9,7 +9,22 @@ namespace Kes
 namespace Private
 {
 
-bool GlobalCmdHandler::process(const char* key, const Json::Document& request, Json::Document& response)
+GlobalCmdHandler::~GlobalCmdHandler()
+{
+    m_rp->unregisterHandler("stop", this);
+    m_rp->unregisterHandler("version", this);
+}
+
+GlobalCmdHandler::GlobalCmdHandler(IRequestProcessor* rp, Condition& exitCondition, Log::ILog* log)
+        : m_rp(rp)
+        , m_exitCondition(exitCondition)
+        , m_log(log)
+{
+    m_rp->registerHandler("stop", this);
+    m_rp->registerHandler("version", this);
+}
+
+bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response)
 {
     if (!std::strcmp(key, "stop"))
     {
@@ -40,6 +55,15 @@ bool GlobalCmdHandler::process(const char* key, const Json::Document& request, J
     return false;
 }
 
+void GlobalCmdHandler::startSession(uint32_t id)
+{
+
+}
+
+void GlobalCmdHandler::endSession(uint32_t id)
+{
+
+}
 
 } // namespace Private {}
 

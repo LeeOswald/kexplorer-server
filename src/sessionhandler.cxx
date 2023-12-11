@@ -12,15 +12,16 @@ namespace Private
 
 SessionHandler::~SessionHandler()
 {
-
+    m_options.requestProcessor->endSession(m_id);
 }
 
-SessionHandler::SessionHandler(const SessionHandlerOptions& options, const std::string& peerAddr)
+SessionHandler::SessionHandler(const SessionHandlerOptions& options, const std::string& peerAddr, uint32_t id)
     : m_options(options)
     , m_peerAddr(peerAddr)
+    , m_id(id)
     , m_buffer(options.bufferSize, options.bufferLimit)
 {
-
+    m_options.requestProcessor->startSession(m_id);
 }
 
 void SessionHandler::close() noexcept
@@ -79,7 +80,7 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
 
             m_buffer.push("", 1); // append '\0'
 
-            response = m_options.requestProcessor->process(m_buffer.data(), posCur);
+            response = m_options.requestProcessor->process(m_id, m_buffer.data(), posCur);
 
             m_buffer.pop(posCur + 1); // also pop '\0'
             m_jsonDepthMax = 0;
