@@ -7,7 +7,6 @@
 
 #include <boost/asio.hpp>
 
-
 namespace Kes
 {
 

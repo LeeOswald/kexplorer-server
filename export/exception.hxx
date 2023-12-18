@@ -1,13 +1,13 @@
 #pragma once
 
-#include <export/platform.hxx>
+#include <export/sourcelocation.hxx>
 
 
 namespace Kes
 {
 
 
-class Exception
+class KESCOMMON_EXPORT Exception
     : public std::exception
 {
 public:

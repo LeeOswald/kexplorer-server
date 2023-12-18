@@ -54,3 +54,13 @@
     #define _countof(a) __countof_impl(a)
 
 #endif // _countof
+
+#if defined _WIN32 || defined __CYGWIN__
+    #ifdef KES_COMMON_EXPORTS
+        #define KESCOMMON_EXPORT __declspec(dllexport)
+    #else
+        #define KESCOMMON_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define KESCOMMON_EXPORT __attribute__((visibility("default")))
+#endif

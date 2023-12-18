@@ -12,7 +12,7 @@ namespace Util
 namespace Request
 {
 
-std::string simple(const char* command);
+KESCOMMON_EXPORT std::string simple(const char* command);
 
 } // namespace Request {}
 
@@ -20,7 +20,7 @@ std::string simple(const char* command);
 namespace Response
 {
 
-std::string fail(const char* reason);
+KESCOMMON_EXPORT std::string fail(const char* reason);
 
 
 } // namespace Response {}

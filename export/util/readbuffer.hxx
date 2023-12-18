@@ -12,7 +12,7 @@ namespace Kes
 namespace Util
 {
 
-class ReadBuffer final
+class KESCOMMON_EXPORT ReadBuffer final
 {
 public:
     using Ptr = std::shared_ptr<ReadBuffer>;

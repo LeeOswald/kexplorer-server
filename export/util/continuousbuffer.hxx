@@ -12,7 +12,7 @@ namespace Util
 {
 
 
-class ContinuousBuffer final
+class KESCOMMON_EXPORT ContinuousBuffer final
 {
 public:
     explicit ContinuousBuffer(size_t size, size_t limit)

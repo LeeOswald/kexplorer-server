@@ -13,6 +13,6 @@ add_executable(${KES_SERVER}
 )
 
 
-target_link_libraries(${KES_SERVER} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} ${KES_COMMON})
+target_link_libraries(${KES_SERVER} PRIVATE ${PLATFORM_LIBRARIES} ${BOOST_LIBRARIES} ${KES_COMMON} ${KES_SRVLIB})
 
 target_compile_features(${KES_SERVER} PUBLIC ${KES_CXX_FEATURES})

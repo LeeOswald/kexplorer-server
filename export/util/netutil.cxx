@@ -7,7 +7,7 @@ namespace Kes
 namespace Util
 {
 
-std::pair<std::string, uint16_t> splitAddress(const std::string& s)
+KESCOMMON_EXPORT std::pair<std::string, uint16_t> splitAddress(const std::string& s)
 {
     auto p0 = s.find_last_of('.');
     auto p1 = s.find_last_of(':');
@@ -35,7 +35,7 @@ std::pair<std::string, uint16_t> splitAddress(const std::string& s)
     return std::make_pair(std::move(addressPart), port);
 }
 
-boost::asio::ip::tcp::endpoint endpointFromString(const std::string& s)
+KESCOMMON_EXPORT boost::asio::ip::tcp::endpoint endpointFromString(const std::string& s)
 {
     auto parts = splitAddress(s);
     auto address = boost::asio::ip::make_address(parts.first);

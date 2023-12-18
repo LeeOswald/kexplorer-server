@@ -9,19 +9,34 @@ namespace Kes
 namespace Private
 {
 
+namespace
+{
+
+const char* const s_commands[] = 
+{
+    "stop",
+    "version"
+};
+
+} // namespace {}
+
 GlobalCmdHandler::~GlobalCmdHandler()
 {
-    m_rp->unregisterHandler("stop", this);
-    m_rp->unregisterHandler("version", this);
+    for (auto cmd: s_commands)
+    {
+        m_rp->unregisterHandler(cmd, this);
+    }
 }
 
 GlobalCmdHandler::GlobalCmdHandler(IRequestProcessor* rp, Condition& exitCondition, Log::ILog* log)
-        : m_rp(rp)
-        , m_exitCondition(exitCondition)
-        , m_log(log)
+    : m_rp(rp)
+    , m_exitCondition(exitCondition)
+    , m_log(log)
 {
-    m_rp->registerHandler("stop", this);
-    m_rp->registerHandler("version", this);
+    for (auto cmd: s_commands)
+    {
+        m_rp->registerHandler(cmd, this);
+    }
 }
 
 bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response)

@@ -10,7 +10,7 @@ namespace Kes
 {
 
 
-class Condition final
+class KESCOMMON_EXPORT Condition final
 {
 public:
     ~Condition()

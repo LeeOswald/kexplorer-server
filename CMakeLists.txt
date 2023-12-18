@@ -15,6 +15,25 @@ get_version_from_file("version.txt")
 
 project(KernelExplorer-server VERSION ${KES_VERSION})
 
+if(NOT CMAKE_BUILD_TYPE)
+    message(WARNING "CMAKE_BUILD_TYPE isn't defined. Debug value will be used by default.")
+    set(CMAKE_BUILD_TYPE Debug)
+else()
+    if(${CMAKE_BUILD_TYPE} MATCHES "^[Rr][Ee][Ll][Ee][Aa][Ss][Ee]$")
+        set(CMAKE_BUILD_TYPE Release)
+    elseif(${CMAKE_BUILD_TYPE} MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+        set(CMAKE_BUILD_TYPE Debug)
+    else()
+        message(WARNING "CMAKE_BUILD_TYPE isn't Release or Debug. Debug value will be used by default.")
+        set(CMAKE_BUILD_TYPE Debug)
+    endif()
+endif()
+
+if(MSVC)
+else()
+    add_link_options(-rdynamic) # enable stack capture
+endif()
+
 set(KES_LINUX 0)
 set(KES_WINDOWS 0)
 
@@ -53,6 +72,7 @@ set(BOOST_LIBRARIES Boost::program_options)
 set(KES_COMMON kescommon)
 
 if(KES_LINUX)
+    set(KES_SRVLIB kesrv)
     set(KES_SERVER kexplorer-server)
 endif()
 
@@ -61,5 +81,6 @@ set(KES_CTL kexplorer-ctl)
 add_subdirectory(export)
 add_subdirectory(kesctl)
 if(KES_LINUX)
+    add_subdirectory(kesrv)
     add_subdirectory(src)
 endif()
