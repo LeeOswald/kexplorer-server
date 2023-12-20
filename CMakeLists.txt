@@ -68,6 +68,14 @@ endif()
 
 set(BOOST_LIBRARIES Boost::program_options)
 
+# force shared CRT
+if(MSVC)
+    cmake_policy(SET CMP0091 NEW)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 
 set(KES_COMMON kescommon)
 
@@ -78,9 +86,11 @@ endif()
 
 set(KES_CTL kexplorer-ctl)
 
+add_subdirectory(3rd_party/googletest)
 add_subdirectory(export)
 add_subdirectory(kesctl)
 if(KES_LINUX)
     add_subdirectory(kesrv)
     add_subdirectory(src)
 endif()
+add_subdirectory(tests)

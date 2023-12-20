@@ -10,6 +10,10 @@ namespace Kes
 {
 
 
+//
+// stateful condition variable
+//
+
 class KESCOMMON_EXPORT Condition final
 {
 public:

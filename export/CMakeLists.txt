@@ -8,11 +8,16 @@ endif()
 add_library(${KES_COMMON} SHARED
     callstack.hxx
     condition.hxx
+    crc32.hxx
     exception.hxx
+    fixedstring.hxx
     json.hxx
+    knownprops.hxx
     log.hxx
     platform.hxx
+    property.hxx
     sourcelocation.hxx
+    stringliteral.hxx
     util/autoptr.hxx
     util/continuousbuffer.hxx
     util/format.cxx

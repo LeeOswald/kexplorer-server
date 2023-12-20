@@ -9,11 +9,12 @@ namespace Kes
 namespace Util
 {
 
+//
 // sometimes we need an unique_ptr<> that can be used as an out parameter of a function
 // this is required by a huge number of C-style APIs
+//
 
 template <typename T, typename FreeFuncT, FreeFuncT* Free>
-    requires (!std::is_array_v<T>)
 struct AutoPtr final
 {
     using Value = T;
