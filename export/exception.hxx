@@ -13,7 +13,7 @@ namespace Kes
 {
 
 
-class KESCOMMON_EXPORT Exception
+class Exception
     : public std::exception
 {
 public:

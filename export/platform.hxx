@@ -18,8 +18,11 @@
 
 #include <errno.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <unistd.h>
+
+#if KES_LINUX
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
 
 // often-used std headers
 #include <algorithm>

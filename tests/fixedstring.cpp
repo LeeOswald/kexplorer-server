@@ -41,15 +41,12 @@ TEST(Kes_FixedString, iterate)
     {
         Kes::FixedString<10> s;
         EXPECT_EQ(s.begin(), s.end());
-        EXPECT_EQ(s.cbegin(), s.cend());
         EXPECT_EQ(s.rbegin(), s.rend());
-        EXPECT_EQ(s.crbegin(), s.crend());
     }
 
     {
         Kes::FixedString<10> s("abcdef");
         auto it = s.begin();
-        EXPECT_EQ(it, s.cbegin());
         EXPECT_NE(it, s.end());
         EXPECT_EQ(*it, 'a');
         ++it;
@@ -69,14 +66,12 @@ TEST(Kes_FixedString, iterate)
         EXPECT_EQ(*it, 'f');
         ++it;
         EXPECT_EQ(it, s.end());
-        EXPECT_EQ(it, s.cend());
     }
 
     {
         Kes::FixedString<10> s("abcdef");
 
         auto it = s.rbegin();
-        EXPECT_EQ(it, s.crbegin());
         EXPECT_NE(it, s.rend());
         EXPECT_EQ(*it, 'f');
         ++it;
@@ -96,7 +91,6 @@ TEST(Kes_FixedString, iterate)
         EXPECT_EQ(*it, 'a');
         ++it;
         EXPECT_EQ(it, s.rend());
-        EXPECT_EQ(it, s.crend());
     }
 }
 

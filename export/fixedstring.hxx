@@ -84,17 +84,7 @@ public:
         return m_str;
     }
 
-    constexpr const_iterator cbegin() const noexcept
-    {
-        return m_str;
-    }
-
     constexpr const_iterator end() const noexcept
-    {
-        return m_str + m_length;
-    }
-
-    constexpr const_iterator cend() const noexcept
     {
         return m_str + m_length;
     }
@@ -104,17 +94,7 @@ public:
         return const_reverse_iterator(end());
     }
 
-    constexpr const_reverse_iterator crbegin() const noexcept
-    {
-        return const_reverse_iterator(end());
-    }
-
     constexpr const_reverse_iterator rend() const noexcept
-    {
-        return const_reverse_iterator(begin());
-    }
-
-    constexpr const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(begin());
     }

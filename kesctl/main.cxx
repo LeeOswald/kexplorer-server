@@ -49,9 +49,10 @@ int main(int argc, char* argv[])
         boost::asio::signal_set signals(io);
         signals.add(SIGINT);
         signals.add(SIGTERM);
+#if !KES_WINDOWS
         signals.add(SIGPIPE);
         signals.add(SIGHUP);
-
+#endif
         signals.async_wait(
             [&io, &client]([[maybe_unused]] boost::system::error_code ec, [[maybe_unused]] int signo)
             {

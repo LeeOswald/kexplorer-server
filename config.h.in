@@ -15,3 +15,6 @@
 #define KES_APPLICATION_NAME "KernelExplorer"
 
 #define KES_COPYRIGHT "Copyright © 2023 Lee Oswald"
+
+#define KES_WINDOWS @KES_WINDOWS@
+#define KES_LINUX @KES_LINUX@

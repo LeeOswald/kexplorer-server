@@ -61,12 +61,17 @@ set(PLATFORM_LIBRARIES Threads::Threads)
 # require Boost
 find_package(Boost REQUIRED COMPONENTS system program_options)
 
-if(Boost_FOUND)
-  include_directories(${Boost_INCLUDE_DIRS})
-  link_directories(${Boost_LIBRARY_DIRS})
-endif()
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 set(BOOST_LIBRARIES Boost::program_options)
+
+if (WIN32)
+  # disable autolinking in boost
+  add_definitions(-DBOOST_ALL_NO_LIB)
+  # force all boost libraries to dynamic link
+  add_definitions(-DBOOST_ALL_DYN_LINK)
+endif()
 
 # force shared CRT
 if(MSVC)
