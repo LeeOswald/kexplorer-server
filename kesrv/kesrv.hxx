@@ -1,6 +1,19 @@
 #pragma once
 
+#include <export/platform.hxx>
 #include <export/json.hxx>
+
+
+#if defined _WIN32 || defined __CYGWIN__
+    #ifdef KES_KESRV_EXPORTS
+        #define KESRV_EXPORT __declspec(dllexport)
+    #else
+        #define KESRV_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define KESRV_EXPORT __attribute__((visibility("default")))
+#endif
+
 
 namespace Kes
 {

@@ -1,6 +1,14 @@
+#include <export/exception.hxx>
+#include <export/knownprops.hxx>
+#include <export/util/autoptr.hxx>
+#include <export/util/posixerror.hxx>
+
 #include "procfs.hxx"
 
 #include <fstream>
+
+#include <dirent.h>
+#include <sys/stat.h>
 
 
 namespace Kes
@@ -9,32 +17,59 @@ namespace Kes
 namespace ProcFs
 {
 
-std::string getProcFsPath()
+ProcFs::ProcFs(Log::ILog* log)
+    : m_log(log)
 {
-    return std::string("/proc");
+    auto rootPath = root();
+    if (::access(rootPath.c_str(), R_OK) == -1)
+    {   
+        auto e = errno;
+        throw Kes::Exception(KES_HERE(), "Failed to access /proc", Kes::Props::PosixErrorCode(e), Kes::Props::DecodedError(Kes::Util::posixErrorToString(e)));
+    }
 }
 
-std::optional<Stat> readStat(pid_t pid)
+std::string ProcFs::root()
 {
-    auto path = getProcFsPath();
-    path.append("/");
-    path.append(std::to_string(pid));
-    path.append("/stat");
+    static std::string s_path("/proc");
+    return s_path;
+}
 
-    std::ifstream stat(path);
-    if (!stat.good())
-    {
-        //LogWarning(getLog(), "Failed to open %s", path.c_str());
-        return std::nullopt;
-    }
-
+Stat ProcFs::readStat(pid_t pid) noexcept
+{
     Stat result;
-
-    std::string s;
-    std::getline(stat, s);
+    result.pid = pid; // Stat::pid is always valid
 
     try
     {
+        auto path = root();
+        path.append("/");
+        path.append(std::to_string(pid));
+        
+        struct ::stat64 fileStat;
+        if (::stat64(path.c_str(), &fileStat) == -1)
+        {
+            LogDebug(m_log, "Process %d not found: %d", pid, errno);
+            result.error = "Process not found";
+            return result;
+        }
+
+        result.startTime = fileStat.st_ctime;
+
+        path.append("/stat");
+
+        std::ifstream stat(path);
+        if (!stat.good())
+        {
+            LogDebug(m_log, "Process %d could not be opened: %d", pid, errno);
+            result.error = "Failed to open process";
+            return result;
+        }
+
+        result.ruid = fileStat.st_uid;
+
+        std::string s;
+        std::getline(stat, s);
+    
         auto start = s.c_str();
         auto pEnd = start + s.length();
         auto end = start;
@@ -49,8 +84,9 @@ std::optional<Stat> readStat(pid_t pid)
                     end = std::strrchr(end, ')'); // avoid process names like ":-) 1 2 3"
                     if (!end || !*end)
                     {
-                        //LogError(getLog(), "Invalid stat record in %s", path.c_str());
-                        return std::nullopt;
+                        LogDebug(m_log, "Invalid stat record for process %d: [%s]", pid, s.c_str());
+                        result.error = "Invalid process stat record";
+                        return result; 
                     }
                 }
 
@@ -229,8 +265,160 @@ std::optional<Stat> readStat(pid_t pid)
     }
     catch (std::exception& e)
     {
-        //LogWarning(getLog(), "Failed to parse %s: %s", path.c_str(), e.what());
-        return std::nullopt;
+        LogDebug(m_log, "stat for process %d could not be read: %s", pid, e.what());
+        result.error = e.what();
+    }
+
+    return result;
+}
+
+std::optional<std::string> ProcFs::readComm(pid_t pid) noexcept
+{
+    try
+    {
+        auto path = root();
+        path.append("/");
+        path.append(std::to_string(pid));
+        path.append("/comm");
+    
+        std::ifstream file(path.c_str(), std::ifstream::in);
+        std::string comm;
+        if (std::getline(file, comm))
+            return comm;
+    }
+    catch (std::exception& e)
+    {
+        LogDebug(m_log, "comm for process %d could not be read: %s", pid, e.what());
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
+{
+    try
+    {
+        auto path = root();
+        path.append("/");
+        path.append(std::to_string(pid));
+        path.append("/exe");
+    
+        struct stat sb = { 0 };
+        if (::lstat(path.c_str(), &sb) == -1)
+        {
+            LogDebug(m_log, "exe link for process %d could not be opened: %d", pid, errno);
+            return std::nullopt;
+        }
+        else
+        {
+            size_t size = sb.st_size;
+            if (size == 0) // lstat can yield sb.st_size = 0
+            {
+#ifdef PATH_MAX
+                size = PATH_MAX;
+#else
+                size = 4096;
+#endif
+            }
+
+            std::string exe;
+            exe.resize(size + 1, '\0');
+            auto r = ::readlink(path.c_str(), exe.data(), size); // readlink does not append '\0'
+            if (r < 0)
+            {
+                LogDebug(m_log, "Failed to read exe link for process %d: %s", pid, errno);
+                return std::nullopt;
+            }
+
+            exe.resize(std::strlen(exe.c_str())); // cut extra '\0'
+
+            return exe;
+        }
+    }
+    catch (std::exception& e)
+    {
+        LogDebug(m_log, "exe link for process %d could not be read: %s", pid, e.what());
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> ProcFs::readCmdLine(pid_t pid) noexcept
+{
+    try
+    {
+        auto path = root();
+        path.append("/");
+        path.append(std::to_string(pid));
+        path.append("/cmdline");
+
+        std::ifstream stream(path);
+        if (!stream.good())
+        {
+            LogDebug(m_log, "Failed to open cmdline for process %d", pid);
+        }
+        else
+        {
+            std::string cmdLine;
+            std::string a;
+            while (std::getline(stream, a, '\0'))
+            {
+                if (!a.empty())
+                {
+                    if (!cmdLine.empty())
+                        cmdLine.append(" ");
+
+                    cmdLine.append(std::move(a));
+                }
+            }
+
+            return cmdLine;
+        }
+    }
+    catch (std::exception& e)
+    {
+        LogDebug(m_log, "cmdline for process %d could not be read: %s", pid, e.what());
+    }
+
+    return std::nullopt;
+}
+
+std::vector<pid_t> ProcFs::enumeratePids() noexcept
+{
+    std::vector<pid_t> result;
+
+    try
+    {
+        auto path = root();
+        Util::AutoPtr<DIR, decltype(::closedir), ::closedir> dir(::opendir(path.c_str()));
+        if (!dir)
+        {
+            auto e = errno;
+            throw Kes::Exception(KES_HERE(), "Failed to open /proc", Kes::Props::PosixErrorCode(e), Kes::Props::DecodedError(Kes::Util::posixErrorToString(e)));
+        }
+    
+        for (auto ent = ::readdir(dir); ent != nullptr; ent = ::readdir(dir))
+        {
+            if (!std::isdigit(ent->d_name[0]))
+                continue;
+
+            pid_t pid = Stat::InvalidPid;
+            try
+            {
+                pid = std::stoul(ent->d_name);
+            }
+            catch (std::exception& e)
+            {
+                LogDebug(m_log, "Failed to parse PID %s: %s", ent->d_name, e.what());
+                continue;
+            }
+
+            result.push_back(pid);
+        }
+    }
+    catch (std::exception& e)
+    {
+        LogError(m_log, "Failed to enumerate PIDs: %s", e.what());
     }
 
     return result;

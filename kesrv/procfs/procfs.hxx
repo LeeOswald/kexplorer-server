@@ -1,6 +1,9 @@
 #pragma once
 
-#include <export/platform.hxx>
+#include <export/log.hxx>
+#include <kesrv/kesrv.hxx>
+
+#include <vector>
 
 
 namespace Kes
@@ -13,6 +16,9 @@ namespace ProcFs
 struct Stat
 {
     static constexpr pid_t InvalidPid = pid_t(-1);
+
+    bool valid = false;
+    std::string error;
 
     /* 0*/ pid_t pid = InvalidPid;
     /* 1*/ std::string comm;
@@ -67,13 +73,33 @@ struct Stat
     /*50*/ unsigned long env_end = 0;
     /*51*/ int exit_code = 0;
 
+    time_t startTime = 0;                                // process start time
+    uid_t ruid = uid_t(-1);                              // real user ID of process owner
+
     Stat() = default;
 };
 
 
-std::string getProcFsPath();
+class KESRV_EXPORT ProcFs final
+{
+public:
+    explicit ProcFs(Log::ILog* log);
 
-std::optional<Stat> readStat(pid_t pid);
+    static std::string root();
+
+    Stat readStat(pid_t pid) noexcept;
+    std::optional<std::string> readComm(pid_t pid) noexcept;
+    std::optional<std::string> readExePath(pid_t pid) noexcept;
+    std::optional<std::string> readCmdLine(pid_t pid) noexcept;
+
+    std::vector<pid_t> enumeratePids() noexcept;
+
+private:
+    Log::ILog* m_log;
+};
+
+
+
 
 
 } // namespace ProcFs {}
