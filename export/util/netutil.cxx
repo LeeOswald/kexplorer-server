@@ -1,3 +1,4 @@
+#include <export/exception.hxx>
 #include <export/util/netutil.hxx>
 
 
@@ -12,7 +13,7 @@ KESCOMMON_EXPORT std::pair<std::string, uint16_t> splitAddress(const std::string
     auto p0 = s.find_last_of('.');
     auto p1 = s.find_last_of(':');
     if ((p0 == s.npos) || (p1 == s.npos))
-        throw std::invalid_argument("Invalid server address:port pair");
+        throw Kes::Exception(KES_HERE(), "Invalid server address:port pair");
 
     std::string addressPart, portPart;
     if (p1 > p0)
@@ -30,7 +31,7 @@ KESCOMMON_EXPORT std::pair<std::string, uint16_t> splitAddress(const std::string
 
     uint16_t port = uint16_t(std::strtoul(portPart.c_str(), nullptr, 10));
     if (!port)
-        throw std::invalid_argument("Invalid server port");
+        throw Kes::Exception(KES_HERE(), "Invalid server port");
 
     return std::make_pair(std::move(addressPart), port);
 }

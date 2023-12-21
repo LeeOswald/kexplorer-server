@@ -1,6 +1,7 @@
 #include "logger.hxx"
 
 #include <export/exception.hxx>
+#include <export/knownprops.hxx>
 
 #include <fcntl.h>
 #include <sys/file.h>
@@ -25,16 +26,16 @@ Logger::Logger(Kes::Log::Level level, const char* fileName)
     , m_level(level)
 {
     if (m_file == -1)
-        throw std::system_error(std::error_code(errno, std::system_category()), "Failed to create the logfile");
+        throw Kes::Exception(KES_HERE(), "Failed to create the logfile", Kes::Props::PosixErrorCode(errno));
 
     if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
     {
         ::close(m_file);
 
         if (errno == EWOULDBLOCK)
-            throw Exception("Server is already running");
+            throw Exception(KES_HERE(), "Server is already running");
 
-        throw std::system_error(std::error_code(errno, std::system_category()), "Failed to lock the logfile");
+        throw Kes::Exception(KES_HERE(), "Failed to lock the logfile", Kes::Props::PosixErrorCode(errno));
     }
 }
 
@@ -95,7 +96,7 @@ bool Logger::writev(Kes::Log::Level level, const char* format, va_list args) noe
         message.append(formatted);
         message.append("\n");
 
-#if 1
+#if KES_DEBUG
         std::cout << message;
 #endif
 

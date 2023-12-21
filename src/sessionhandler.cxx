@@ -38,7 +38,7 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
         auto posPrev = m_buffer.used();
 
         if (!m_buffer.push(data, size))
-            throw Exception("Packet size exceeds limit");
+            throw Exception(KES_HERE(), "Packet size exceeds limit");
 
         auto posCur = m_buffer.used();
 
@@ -61,7 +61,7 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
             else if (*cur == '}')
             {
                 if (m_jsonDepth == 0)
-                    throw Exception("Invalid JSON");
+                    throw Exception(KES_HERE(), "Invalid JSON");
 
                 --m_jsonDepth;
             }
