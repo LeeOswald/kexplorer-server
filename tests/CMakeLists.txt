@@ -6,6 +6,7 @@ add_executable(
     ${TARGET}
     common.hpp
     main.cpp
+    exception.cpp
     fixedstring.cpp
 )
 

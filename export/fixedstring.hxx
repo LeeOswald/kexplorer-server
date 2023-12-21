@@ -56,9 +56,6 @@ public:
 
     FixedString& operator=(const FixedString&) = delete;
 
-    FixedString(FixedString&&) = delete;
-    FixedString& operator=(FixedString&&) = delete;
-
     constexpr size_type length() const noexcept
     {
         return m_length;

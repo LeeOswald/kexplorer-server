@@ -32,7 +32,7 @@ Client::Client(boost::asio::io_context& io, const char* addr, uint16_t port, boo
     auto results = resolver.resolve(query, ec);
     if (ec)
     {
-        throw Kes::Exception(std::string("Failed to resolve the server address: ") + ec.message());
+        throw Kes::Exception(KES_HERE(), std::string("Failed to resolve the server address: ") + ec.message());
     }
 
     for (auto& r : results)
@@ -89,7 +89,7 @@ void Client::command(const std::string& cmd)
 
     if (!checkConnection())
     {
-        throw Kes::Exception("Unable to connect to the server");
+        throw Kes::Exception(KES_HERE(), "Unable to connect to the server");
     }
 
     if (m_verbose)
@@ -182,7 +182,7 @@ bool Client::process(const char* data, size_t size) noexcept
         auto posPrev = m_bufferIn.used();
 
         if (!m_bufferIn.push(data, size))
-            throw Kes::Exception("Packet size exceeds limit");
+            throw Kes::Exception(KES_HERE(), "Packet size exceeds limit");
 
         auto posCur = m_bufferIn.used();
 
@@ -205,7 +205,7 @@ bool Client::process(const char* data, size_t size) noexcept
             else if (*cur == '}')
             {
                 if (m_jsonDepth == 0)
-                    throw Kes::Exception("Invalid JSON");
+                    throw Kes::Exception(KES_HERE(), "Invalid JSON");
 
                 --m_jsonDepth;
             }

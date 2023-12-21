@@ -23,9 +23,9 @@ struct DecodedStackFrame
     template <typename FileT, typename FunctionT, typename DecoratedFunctionT>
     explicit DecodedStackFrame(uint64_t address, FileT&& file, FunctionT&& function, DecoratedFunctionT&& decoratedFunction)
         : address(address)
-        , file(std::forward<FileT&&>(file))
-        , function(std::forward<FunctionT&&>(function))
-        , decoratedFunction(std::forward<DecoratedFunctionT&&>(decoratedFunction))
+        , file(std::forward<FileT>(file))
+        , function(std::forward<FunctionT>(function))
+        , decoratedFunction(std::forward<DecoratedFunctionT>(decoratedFunction))
     {}
 };
 

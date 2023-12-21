@@ -66,11 +66,11 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 set(BOOST_LIBRARIES Boost::program_options)
 
-if (WIN32)
-  # disable autolinking in boost
-  add_definitions(-DBOOST_ALL_NO_LIB)
-  # force all boost libraries to dynamic link
-  add_definitions(-DBOOST_ALL_DYN_LINK)
+if(WIN32)
+    # disable autolinking in boost
+    add_definitions(-DBOOST_ALL_NO_LIB)
+    # force all boost libraries to dynamic link
+    add_definitions(-DBOOST_ALL_DYN_LINK)
 endif()
 
 # force shared CRT
@@ -81,6 +81,10 @@ endif()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
+
+if(WIN32)
+    add_definitions(-D_WIN32_WINNT=0x0601)
+endif()
 
 set(KES_COMMON kescommon)
 

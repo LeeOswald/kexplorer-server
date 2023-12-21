@@ -9,8 +9,9 @@ namespace Kes
 namespace Props
 {
 
-using PosixErrorCodeTraits = PropertyTypeTraits<int, KES_PROPID("posix_error_code")>;
-using PosixErrorCode = PropertyInfo<PosixErrorCodeTraits, "POSIX error code", PosixErrorCodeTraits>;
+using DecodedError = PropertyInfo<std::string, KES_PROPID("decoded_error"), "Error message">;
+
+using PosixErrorCode = PropertyInfo<int, KES_PROPID("posix_error_code"), "POSIX error code">;
 
 } // namespace Props {}
 

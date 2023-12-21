@@ -1,57 +1,52 @@
 #pragma once
 
 #include <export/crc32.hxx>
+#include <export/fixedstring.hxx>
 #include <export/stringliteral.hxx>
 
 #include <any>
-#include <array>
+#include <vector>
 
 
 namespace Kes
 {
 
-template <typename ValueTypeT, uint32_t IdV = 0, typename UnderlyingTypeT = ValueTypeT>
-struct PropertyTypeTraits
+using PropId = uint32_t;
+
+using PropName = FixedString<64>;
+
+
+
+template <typename ValueT, PropId PrId, StringLiteral PrName>
+class PropertyInfo final
 {
-    using Id = std::integral_constant<uint32_t, IdV>;
-    using ValueType = ValueTypeT;
-    using UnderlyingType = UnderlyingTypeT;
-};
-
-
-template <typename ValueTypeOrTraitsT, StringLiteral Name, typename ValueTypeTraitsT = PropertyTypeTraits<ValueTypeOrTraitsT>>
-class PropertyInfo
-{
-private:
-    template <typename T>
-    struct ChooseValueType
-    {
-        using Type = T;
-    };
-
-    template <typename ValueTypeT, uint32_t IdV, typename UnderlyingTypeT>
-    struct ChooseValueType<PropertyTypeTraits<ValueTypeT, IdV, UnderlyingTypeT>>
-    {
-        using Type = ValueTypeT;
-    };
-
 public:
-    using ValueType = typename ChooseValueType<ValueTypeOrTraitsT>::Type;
-    using ValueTypeTraits = std::conditional<std::is_same<ValueType, ValueTypeOrTraitsT>::value, ValueTypeTraitsT, ValueTypeOrTraitsT>;
+    using ValueType = ValueT;
+    using Id = std::integral_constant<PropId, PrId>;
 
     template <typename T>
     explicit constexpr PropertyInfo(T&& value) noexcept
-        : m_value(std::forward<T&&>(value))
+        : m_value(std::forward<T>(value))
     {}
 
-    constexpr const ValueType& value() const noexcept
+    constexpr PropId id() const noexcept
+    {
+        return Id::value;
+    }
+
+    constexpr ValueType&& value() && noexcept
+    {
+        return std::move(m_value);
+    }
+
+    constexpr ValueType& value() & noexcept
     {
         return m_value;
     }
 
     static constexpr const char* name() noexcept
     {
-        return fromStringLiteral<Name>();
+        return fromStringLiteral<PrName>();
     }
 
 private:
@@ -59,9 +54,30 @@ private:
 };
 
 
-using PropId = uint32_t;
+struct Property
+{
+    Property() = default;
 
-using PropName = std::array<char, 64>;
+    Property(const std::string_view& name, PropId id, std::any&& value) noexcept
+        : name(name)
+        , id(id)
+        , value(std::move(value))
+    {}
+
+    template <typename ValueT>
+    Property(const std::string_view& name, PropId id, ValueT&& value) noexcept
+        : name(name)
+        , id(id)
+        , value(std::forward<ValueT>(value))
+    {}
+
+    PropName name;
+    PropId id;
+    std::any value;
+};
+
+
+using PropertyBag = std::vector<Property>;
 
 
 } // namespace Kes {}
