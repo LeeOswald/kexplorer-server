@@ -49,7 +49,7 @@ TEST(Kes_Exception, known_props)
 {
     try
     {
-        throw Kes::Exception(KES_HERE(), "POSIX exception", Kes::Props::PosixErrorCode(ENOENT), Kes::Props::DecodedError("ENOENT"));
+        throw Kes::Exception(KES_HERE(), "POSIX exception", Kes::ExceptionProps::PosixErrorCode(ENOENT), Kes::ExceptionProps::DecodedError("ENOENT"));
     }
     catch (Kes::Exception& e)
     {
@@ -59,16 +59,16 @@ TEST(Kes_Exception, known_props)
         ASSERT_NE(props, nullptr);
         EXPECT_EQ(props->size(), 2);
 
-        auto code = e.find(Kes::Props::PosixErrorCode::Id::value);
+        auto code = e.find(Kes::ExceptionProps::PosixErrorCode::Id::value);
         ASSERT_NE(code, nullptr);
-        EXPECT_EQ(code->id, Kes::Props::PosixErrorCode::Id::value);
-        EXPECT_STREQ(code->name.c_str(), Kes::Props::PosixErrorCode::name());
+        EXPECT_EQ(code->id, Kes::ExceptionProps::PosixErrorCode::Id::value);
+        EXPECT_STREQ(code->name.c_str(), Kes::ExceptionProps::PosixErrorCode::name());
         EXPECT_EQ(std::any_cast<int>(code->value), ENOENT);
 
-        auto text = e.find(Kes::Props::DecodedError::Id::value);
+        auto text = e.find(Kes::ExceptionProps::DecodedError::Id::value);
         ASSERT_NE(text, nullptr);
-        EXPECT_EQ(text->id, Kes::Props::DecodedError::Id::value);
-        EXPECT_STREQ(text->name.c_str(), Kes::Props::DecodedError::name());
+        EXPECT_EQ(text->id, Kes::ExceptionProps::DecodedError::Id::value);
+        EXPECT_STREQ(text->name.c_str(), Kes::ExceptionProps::DecodedError::name());
         EXPECT_STREQ(std::any_cast<std::string>(text->value).c_str(), "ENOENT");
 
     }
@@ -114,7 +114,7 @@ TEST(Kes_Exception, format2)
             catch (std::exception& e)
             {
                 std::throw_with_nested(
-                    Kes::Exception(KES_HERE(), "POSIX exception", Kes::Props::PosixErrorCode(ENOENT), Kes::Props::DecodedError("ENOENT"))
+                    Kes::Exception(KES_HERE(), "POSIX exception", Kes::ExceptionProps::PosixErrorCode(ENOENT), Kes::ExceptionProps::DecodedError("ENOENT"))
                 );
             }
         }

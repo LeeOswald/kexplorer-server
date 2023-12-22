@@ -14,11 +14,11 @@ void formatProperty(const Kes::Property& prop, std::ostringstream& out)
 {
     switch (prop.id)
     {
-        case Kes::Props::DecodedError::Id::value:
+        case Kes::ExceptionProps::DecodedError::Id::value:
             out << prop.name << ": " << std::any_cast<std::string>(prop.value);
             break;
 
-        case Kes::Props::PosixErrorCode::Id::value:
+        case Kes::ExceptionProps::PosixErrorCode::Id::value:
             out << prop.name << ": " << std::any_cast<int>(prop.value);
             break;
 

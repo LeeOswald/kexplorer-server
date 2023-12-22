@@ -6,13 +6,13 @@
 namespace Kes
 {
 
-namespace Props
+namespace ExceptionProps
 {
 
 using DecodedError = PropertyInfo<std::string, KES_PROPID("decoded_error"), "Error message">;
 
 using PosixErrorCode = PropertyInfo<int, KES_PROPID("posix_error_code"), "POSIX error code">;
 
-} // namespace Props {}
+} // ExceptionProps {}
 
 } // namespace Kes {}

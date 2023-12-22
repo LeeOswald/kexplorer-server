@@ -21,10 +21,10 @@ public:
         , m_context(std::make_shared<Context>(std::forward<MessageT>(message)))
     {}
 
-    template <typename MessageT, typename PropT, typename... Props>
-    explicit Exception(SourceLocation source, MessageT&& message, PropT&& prop, Props&&... props)
+    template <typename MessageT, typename PropT, typename... ExceptionProps>
+    explicit Exception(SourceLocation source, MessageT&& message, PropT&& prop, ExceptionProps&&... props)
         : m_source(source)
-        , m_context(std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<Props>(props)...))
+        , m_context(std::make_shared<Context>(std::forward<MessageT>(message), std::forward<PropT>(prop), std::forward<ExceptionProps>(props)...))
     {}
 
     const char* what() const noexcept override
@@ -100,9 +100,9 @@ private:
             : message(std::forward<MessageT>(message))
         {}
 
-        template <typename MessageT, typename PropT, typename... Props>
-        Context(MessageT&& message, PropT&& prop, Props&&... props)
-            : Context(std::forward<MessageT>(message), std::forward<Props>(props)...)
+        template <typename MessageT, typename PropT, typename... ExceptionProps>
+        Context(MessageT&& message, PropT&& prop, ExceptionProps&&... props)
+            : Context(std::forward<MessageT>(message), std::forward<ExceptionProps>(props)...)
         {
             addProp(std::forward<PropT>(prop));
         }

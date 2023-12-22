@@ -12,11 +12,11 @@ namespace Kes
 namespace ProcFs
 {
 
+static constexpr pid_t InvalidPid = pid_t(-1);
+static constexpr pid_t KernelPid = 0;
 
 struct Stat
 {
-    static constexpr pid_t InvalidPid = pid_t(-1);
-
     bool valid = false;
     std::string error;
 

@@ -26,7 +26,7 @@ Logger::Logger(Kes::Log::Level level, const char* fileName)
     , m_level(level)
 {
     if (m_file == -1)
-        throw Kes::Exception(KES_HERE(), "Failed to create the logfile", Kes::Props::PosixErrorCode(errno));
+        throw Kes::Exception(KES_HERE(), "Failed to create the logfile", Kes::ExceptionProps::PosixErrorCode(errno));
 
     if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
     {
@@ -35,7 +35,7 @@ Logger::Logger(Kes::Log::Level level, const char* fileName)
         if (errno == EWOULDBLOCK)
             throw Exception(KES_HERE(), "Server is already running");
 
-        throw Kes::Exception(KES_HERE(), "Failed to lock the logfile", Kes::Props::PosixErrorCode(errno));
+        throw Kes::Exception(KES_HERE(), "Failed to lock the logfile", Kes::ExceptionProps::PosixErrorCode(errno));
     }
 }
 

@@ -1,6 +1,7 @@
 #include <export/exception.hxx>
 #include <export/knownprops.hxx>
 #include <export/util/autoptr.hxx>
+#include <export/util/exceptionutil.hxx>
 #include <export/util/posixerror.hxx>
 
 #include "procfs.hxx"
@@ -24,7 +25,7 @@ ProcFs::ProcFs(Log::ILog* log)
     if (::access(rootPath.c_str(), R_OK) == -1)
     {   
         auto e = errno;
-        throw Kes::Exception(KES_HERE(), "Failed to access /proc", Kes::Props::PosixErrorCode(e), Kes::Props::DecodedError(Kes::Util::posixErrorToString(e)));
+        throw Kes::Exception(KES_HERE(), "Failed to access /proc", Kes::ExceptionProps::PosixErrorCode(e), Kes::ExceptionProps::DecodedError(Kes::Util::posixErrorToString(e)));
     }
 }
 
@@ -262,6 +263,8 @@ Stat ProcFs::readStat(pid_t pid) noexcept
             start = end;
             ++end;
         }
+
+        result.valid = true;
     }
     catch (std::exception& e)
     {
@@ -348,8 +351,12 @@ std::optional<std::string> ProcFs::readCmdLine(pid_t pid) noexcept
     try
     {
         auto path = root();
-        path.append("/");
-        path.append(std::to_string(pid));
+        if (pid != KernelPid)
+        {
+            path.append("/");
+            path.append(std::to_string(pid));
+        }
+
         path.append("/cmdline");
 
         std::ifstream stream(path);
@@ -394,7 +401,7 @@ std::vector<pid_t> ProcFs::enumeratePids() noexcept
         if (!dir)
         {
             auto e = errno;
-            throw Kes::Exception(KES_HERE(), "Failed to open /proc", Kes::Props::PosixErrorCode(e), Kes::Props::DecodedError(Kes::Util::posixErrorToString(e)));
+            throw Kes::Exception(KES_HERE(), "Failed to open /proc", Kes::ExceptionProps::PosixErrorCode(e), Kes::ExceptionProps::DecodedError(Kes::Util::posixErrorToString(e)));
         }
     
         for (auto ent = ::readdir(dir); ent != nullptr; ent = ::readdir(dir))
@@ -402,7 +409,7 @@ std::vector<pid_t> ProcFs::enumeratePids() noexcept
             if (!std::isdigit(ent->d_name[0]))
                 continue;
 
-            pid_t pid = Stat::InvalidPid;
+            pid_t pid = InvalidPid;
             try
             {
                 pid = std::stoul(ent->d_name);
@@ -415,6 +422,10 @@ std::vector<pid_t> ProcFs::enumeratePids() noexcept
 
             result.push_back(pid);
         }
+    }
+    catch (Kes::Exception& e)
+    {
+        LogError(m_log, "Failed to enumerate PIDs: %s", Kes::Util::formatException(e).c_str());
     }
     catch (std::exception& e)
     {
