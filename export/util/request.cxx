@@ -13,15 +13,13 @@ namespace Request
 
 KESCOMMON_EXPORT std::string simple(const char* command)
 {
-    Json::Document doc;
-    auto a = doc.GetAllocator();
-
-    doc.SetObject();
-    doc.AddMember("request", Json::Value(command, a), a);
-
     Json::StringBuffer sb;
     Json::Writer<Json::StringBuffer> writer(sb);
-    doc.Accept(writer);
+    
+    writer.StartObject();
+    writer.Key("request");
+    writer.String(command);
+    writer.EndObject();
 
     return sb.GetString();
 }
@@ -33,16 +31,14 @@ namespace Response
 
 KESCOMMON_EXPORT std::string fail(const char* reason)
 {
-    Json::Document doc;
-    auto a = doc.GetAllocator();
-
-    doc.SetObject();
-    doc.AddMember("status", Json::Value("fail", a), a);
-    doc.AddMember("reason", Json::Value(reason, a), a);
-
     Json::StringBuffer sb;
     Json::Writer<Json::StringBuffer> writer(sb);
-    doc.Accept(writer);
+    
+    writer.StartObject();
+    writer.Key("status");
+    writer.String("fail");
+    writer.Key("reason");
+    writer.String(reason);
 
     return sb.GetString();
 }

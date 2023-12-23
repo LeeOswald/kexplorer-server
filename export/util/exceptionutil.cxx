@@ -1,6 +1,8 @@
 #include <export/knownprops.hxx>
 #include <export/util/exceptionutil.hxx>
 
+#include <sstream>
+
 namespace Kes
 {
 
@@ -9,24 +11,6 @@ namespace Util
 
 namespace
 {
-
-void formatProperty(const Kes::Property& prop, std::ostringstream& out)
-{
-    switch (prop.id)
-    {
-        case Kes::ExceptionProps::DecodedError::Id::value:
-            out << prop.name << ": " << std::any_cast<std::string>(prop.value);
-            break;
-
-        case Kes::ExceptionProps::PosixErrorCode::Id::value:
-            out << prop.name << ": " << std::any_cast<int>(prop.value);
-            break;
-
-        default:
-            out << prop.name << ": <value>";
-        break;
-    }
-}
 
 void formatException(const Kes::Exception& e, std::ostringstream& out, int level);
 
@@ -80,8 +64,10 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
     {
         for (auto& prop: *properties)
         {
-            out << '\n' << indent;
-            formatProperty(prop, out);
+            out << "\n" << indent << prop.name << ": ";
+
+            if (!Kes::ExceptionProps::format(prop, out))
+                out << "???";
         }
     }
 

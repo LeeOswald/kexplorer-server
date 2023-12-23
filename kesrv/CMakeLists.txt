@@ -1,7 +1,9 @@
 add_library(${KES_SRVLIB} SHARED
     kesrv.hxx
-    procfs/procfs.cxx
-    procfs/procfs.hxx
+    processmgr/processmanager.cxx
+    processmgr/processmanager.hxx
+    processmgr/procfs.cxx
+    processmgr/procfs.hxx
 )
 
 

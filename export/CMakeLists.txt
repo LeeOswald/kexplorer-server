@@ -19,6 +19,8 @@ add_library(${KES_COMMON} SHARED
     log.hxx
     platform.hxx
     property.hxx
+    propertybag.cxx
+    propertybag.hxx
     sourcelocation.hxx
     stringliteral.hxx
     util/autoptr.hxx

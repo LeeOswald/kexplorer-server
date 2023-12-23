@@ -46,8 +46,7 @@ std::string RequestProcessor::process(uint32_t sessionId, const char* request, s
                 for (auto it = range.first; it != range.second; ++it)
                 {
                     auto handler = it->second;
-                    handler->process(sessionId, key, docRequest, docResponse);
-                    handlerFound = true;
+                    handlerFound = handler->process(sessionId, key, docRequest, docResponse);
                 }
             }
 

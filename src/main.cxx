@@ -1,4 +1,5 @@
 #include <export/condition.hxx>
+#include <kesrv/processmgr/processmanager.hxx>
 
 #include "globalcmdhandler.hxx"
 #include "iorunner.hxx"
@@ -149,6 +150,7 @@ int main(int argc, char* argv[])
 
         Kes::Private::RequestProcessor requestProcessor(&logger);
         Kes::Private::GlobalCmdHandler globalHandler(&requestProcessor, exitCondition, &logger);
+        Kes::Private::ProcessManager processManaher(&requestProcessor, &logger);
 
         const size_t bufferSize = 65536;
         const size_t bufferLimit = 65536;

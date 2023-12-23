@@ -5,6 +5,7 @@
 #include <export/stringliteral.hxx>
 
 #include <any>
+#include <ostream>
 #include <vector>
 
 
@@ -17,12 +18,13 @@ using PropName = FixedString<64>;
 
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrName>
+template <typename ValueT, PropId PrId, StringLiteral PrName, class FormatterT>
 class PropertyInfo final
 {
 public:
     using ValueType = ValueT;
     using Id = std::integral_constant<PropId, PrId>;
+    using Formatter = FormatterT;
 
     template <typename T>
     explicit constexpr PropertyInfo(T&& value) noexcept
@@ -47,6 +49,12 @@ public:
     static constexpr const char* name() noexcept
     {
         return fromStringLiteral<PrName>();
+    }
+
+    void format(std::ostream& strem) const
+    {
+        Formatter f;
+        f(m_value, strem);
     }
 
 private:
@@ -77,7 +85,12 @@ struct Property
 };
 
 
-using PropertyBag = std::vector<Property>;
+template <typename T>
+struct PropertyFormatter
+{
+    using Type = T;
+    void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
+};
 
 
 } // namespace Kes {}

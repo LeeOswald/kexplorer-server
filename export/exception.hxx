@@ -46,7 +46,7 @@ public:
         return nullptr;
     }
 
-    const PropertyBag* properties() const noexcept
+    const std::vector<Property>* properties() const noexcept
     {
         if (m_context)
             return &m_context->properties;
@@ -93,7 +93,7 @@ private:
     struct Context
     {
         std::string message;
-        PropertyBag properties;
+        std::vector<Property> properties;
 
         template <typename MessageT>
         Context(MessageT&& message)
