@@ -329,7 +329,7 @@ std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
             auto r = ::readlink(path.c_str(), exe.data(), size); // readlink does not append '\0'
             if (r < 0)
             {
-                LogDebug(m_log, "Failed to read exe link for process %d: %s", pid, errno);
+                LogDebug(m_log, "Failed to read exe link for process %d: %d", pid, errno);
                 return std::nullopt;
             }
 

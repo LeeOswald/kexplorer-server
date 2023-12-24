@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.20)
 
 function(get_version_from_file VER_FILE_NAME)
     file(READ ${VER_FILE_NAME} KES_VERSION_RAW)

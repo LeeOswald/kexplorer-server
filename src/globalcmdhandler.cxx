@@ -41,11 +41,13 @@ GlobalCmdHandler::GlobalCmdHandler(IRequestProcessor* rp, Condition& exitConditi
 
 bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response)
 {
+    auto& a = response.GetAllocator();
+
     if (!std::strcmp(key, "stop"))
     {
         m_log->write(Log::Level::Info, "GlobalCmdHandler: [stop] command received");
 
-        response.AddMember("status", Json::Value("success", response.GetAllocator()), response.GetAllocator());
+        response.AddMember("status", Json::Value("success", a), a);
 
         m_exitCondition.set();
 
@@ -58,9 +60,9 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::
         std::ostringstream ss;
         ss << KES_APPLICATION_NAME << " " << KES_VERSION_STR << " " << KES_COPYRIGHT;
 
-        response.AddMember("status", Json::Value("success", response.GetAllocator()), response.GetAllocator());
+        response.AddMember("status", Json::Value("success", a), a);
         auto v = ss.str();
-        response.AddMember("version", Json::Value(v.c_str(), v.length(), response.GetAllocator()), response.GetAllocator());
+        response.AddMember("version", Json::Value(v.c_str(), v.length(), a), a);
 
         return true;
     }

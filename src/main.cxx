@@ -122,6 +122,8 @@ int main(int argc, char* argv[])
             bindAddr = vm["address"].as<std::string>();
         }
 
+        logger.write(Kes::Log::Level::Info, "Binding to address %s", bindAddr.c_str());
+
         Kes::Condition exitCondition(false);
 
         const size_t threadCount = 1;

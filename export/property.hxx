@@ -14,9 +14,6 @@ namespace Kes
 
 using PropId = uint32_t;
 
-using PropName = FixedString<64>;
-
-
 
 template <typename ValueT, PropId PrId, StringLiteral PrName, class FormatterT>
 class PropertyInfo final

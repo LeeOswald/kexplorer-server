@@ -105,6 +105,8 @@ void RequestProcessor::unregisterHandler(const char* key, IRequestHandler* handl
 
 void RequestProcessor::startSession(uint32_t id)
 {
+    m_log->write(Log::Level::Info, "RequestProcessor: session %d started", id);
+
     std::lock_guard l(m_mutex);
 
     for (auto it = m_handlers.begin(); it != m_handlers.end(); ++it)
@@ -121,6 +123,8 @@ void RequestProcessor::endSession(uint32_t id)
     {
         it->second->endSession(id);
     }
+
+    m_log->write(Log::Level::Info, "RequestProcessor: session %d finished", id);
 }
 
 } // namespace Private {}
