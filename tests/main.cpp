@@ -1,5 +1,8 @@
 #include "common.hpp"
 
+#include <export/knownprops.hxx>
+
+
 #if KES_DEBUG && defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
@@ -13,6 +16,8 @@ int main(int argc, char** argv)
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);
+
+    Kes::ExceptionProps::registerAll();
 
     return RUN_ALL_TESTS();
 }

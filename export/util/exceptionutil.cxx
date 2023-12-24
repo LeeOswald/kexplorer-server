@@ -1,5 +1,6 @@
 #include <export/knownprops.hxx>
 #include <export/util/exceptionutil.hxx>
+#include <export/util/format.hxx>
 
 #include <sstream>
 
@@ -64,10 +65,18 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
     {
         for (auto& prop: *properties)
         {
-            out << "\n" << indent << prop.name << ": ";
+            out << "\n" << indent;
 
-            if (!Kes::ExceptionProps::format(prop, out))
-                out << "???";
+            auto pi = ExceptionProps::lookupProperty(prop.id);
+            if (pi)
+            {
+                out << pi->name() << ": ";
+                pi->format(prop, out);
+            }
+            else
+            {
+                out << Util::format("0x%08x: ???", prop.id);
+            }
         }
     }
 

@@ -26,12 +26,14 @@ public:
     using Id = std::integral_constant<PropId, PrId>;
     using Formatter = FormatterT;
 
+    PropertyInfo() noexcept = default;
+
     template <typename T>
     explicit constexpr PropertyInfo(T&& value) noexcept
         : m_value(std::forward<T>(value))
     {}
 
-    constexpr PropId id() const noexcept
+    static constexpr PropId id() noexcept
     {
         return Id::value;
     }
@@ -66,20 +68,17 @@ struct Property
 {
     Property() = default;
 
-    Property(const std::string_view& name, PropId id, std::any&& value) noexcept
-        : name(name)
-        , id(id)
+    Property(PropId id, std::any&& value) noexcept
+        : id(id)
         , value(std::move(value))
     {}
 
     template <typename ValueT>
-    Property(const std::string_view& name, PropId id, ValueT&& value) noexcept
-        : name(name)
-        , id(id)
+    Property(PropId id, ValueT&& value) noexcept
+        : id(id)
         , value(std::forward<ValueT>(value))
     {}
 
-    PropName name;
     PropId id;
     std::any value;
 };
@@ -90,6 +89,36 @@ struct PropertyFormatter
 {
     using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
+};
+
+
+struct IPropertyInfo
+{
+    virtual PropId id() const = 0;
+    virtual const char* name() const = 0;
+    virtual void format(const Property& v, std::ostream& s) = 0;
+};
+
+
+template <class PropertyInfoT>
+struct PropertyInfoWrapper
+    : public IPropertyInfo
+{
+    PropId id() const override
+    {
+        return PropertyInfoT::id();
+    }
+
+    const char* name() const override
+    {
+        return PropertyInfoT::name();
+    }
+
+    void format(const Property& v, std::ostream& s) override
+    {
+        typename PropertyInfoT::Formatter f;
+        f(v, s);
+    }
 };
 
 

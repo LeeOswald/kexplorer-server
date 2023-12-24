@@ -1,4 +1,5 @@
 #include <export/condition.hxx>
+#include <export/knownprops.hxx>
 #include <kesrv/processmgr/processmanager.hxx>
 
 #include "globalcmdhandler.hxx"
@@ -112,6 +113,8 @@ int main(int argc, char* argv[])
 
         if (vm.count("daemon"))
             daemonize();
+
+        Kes::ExceptionProps::registerAll();
 
         std::string bindAddr("127.0.0.1:6665");
         if (vm.count("address"))

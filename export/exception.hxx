@@ -68,11 +68,11 @@ public:
     }
 
     template <typename ValueT>
-    Exception& add(const std::string_view& name, PropId id, ValueT&& value)
+    Exception& add(PropId id, ValueT&& value)
     {
         if (m_context)
         {
-            m_context->addProp(name, id, std::forward<ValueT&&>(value));
+            m_context->addProp(id, std::forward<ValueT&&>(value));
         }
 
         return *this;
@@ -83,7 +83,7 @@ public:
     {
         if (m_context)
         {
-            m_context->addProp(prop.name(), prop.id(), (std::forward<PropT>(prop)).value());
+            m_context->addProp(prop.id(), (std::forward<PropT>(prop)).value());
         }
 
         return *this;
@@ -108,15 +108,15 @@ private:
         }
 
         template <typename ValueT>
-        void addProp(const std::string_view& name, PropId id, ValueT&& value)
+        void addProp(PropId id, ValueT&& value)
         {
-            properties.emplace_back(name, id, std::forward<ValueT>(value));
+            properties.emplace_back(id, std::forward<ValueT>(value));
         }
 
         template <typename PropT>
         void addProp(PropT&& prop)
         {
-            properties.emplace_back(prop.name(), prop.id(), (std::forward<PropT>(prop)).value());
+            properties.emplace_back(prop.id(), (std::forward<PropT>(prop)).value());
         }
     };
 
