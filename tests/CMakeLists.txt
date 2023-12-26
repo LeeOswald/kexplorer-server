@@ -10,6 +10,6 @@ add_executable(
     fixedstring.cpp
 )
 
-target_link_libraries(${TARGET} gtest_main ${KES_COMMON})
+target_link_libraries(${TARGET} gtest_main ${KES_SRVLIB})
 
 target_compile_features(${TARGET} PUBLIC ${KES_CXX_FEATURES})

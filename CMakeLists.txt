@@ -13,7 +13,7 @@ endfunction()
 
 get_version_from_file("version.txt")
 
-project(KernelExplorer-server VERSION ${KES_VERSION})
+project(kexplorer-server VERSION ${KES_VERSION})
 
 if(NOT CMAKE_BUILD_TYPE)
     message(WARNING "CMAKE_BUILD_TYPE isn't defined. Debug value will be used by default.")
@@ -48,10 +48,10 @@ else()
     message(FATAL_ERROR "Unsupported OS")
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/kexplorer-version.h.in kexplorer-version.h)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
+include_directories(${PROJECT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 # require pthreads
@@ -81,25 +81,25 @@ endif()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-
+# Windows-specific settings
 if(WIN32)
     add_definitions(-D_WIN32_WINNT=0x0601)
 endif()
 
-set(KES_COMMON kescommon)
+# component names
+set(KES_SRVLIB kesrv)
 
 if(KES_LINUX)
-    set(KES_SRVLIB kesrv)
     set(KES_SERVER kexplorer-server)
 endif()
 
 set(KES_CTL kexplorer-ctl)
 
+# components
 add_subdirectory(3rd_party/googletest)
-add_subdirectory(export)
-add_subdirectory(kesctl)
+add_subdirectory(src/kesrv)
+add_subdirectory(src/kesctl)
 if(KES_LINUX)
-    add_subdirectory(kesrv)
-    add_subdirectory(src)
+    add_subdirectory(src/kexplorer-server)
 endif()
 add_subdirectory(tests)

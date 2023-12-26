@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <export/knownprops.hxx>
+#include <kesrv/knownprops.hxx>
 
 
 #if KES_DEBUG && defined(_MSC_VER)
@@ -17,8 +17,12 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
 
-    Kes::ExceptionProps::registerAll();
+    Kes::initialize();
 
-    return RUN_ALL_TESTS();
+    auto ret = RUN_ALL_TESTS();
+
+    Kes::finalize();
+
+    return ret;
 }
 

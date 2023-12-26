@@ -1,8 +1,8 @@
 #include "common.hpp"
 
-#include <export/exception.hxx>
-#include <export/knownprops.hxx>
-#include <export/util/exceptionutil.hxx>
+#include <kesrv/exception.hxx>
+#include <kesrv/knownprops.hxx>
+#include <kesrv/util/exceptionutil.hxx>
 
 
 TEST(Kes_Exception, simple)

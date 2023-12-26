@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include <export/fixedstring.hxx>
+#include <kesrv/fixedstring.hxx>
 
 
 TEST(Kes_FixedString, construct)
