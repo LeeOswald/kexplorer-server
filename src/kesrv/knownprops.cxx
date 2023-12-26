@@ -54,7 +54,7 @@ KESRV_EXPORT IPropertyInfo* lookupProperty(PropId id)
 namespace Private
 {
 
-KESRV_EXPORT void registerAll()
+void registerAll()
 {
     registerProperty(new PropertyInfoWrapper<DecodedError>);
     registerProperty(new PropertyInfoWrapper<PosixErrorCode>);

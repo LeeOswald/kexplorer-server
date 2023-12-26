@@ -1,13 +1,15 @@
-set(PLATFORM_FILES
-    ../../include/kesrv/requestprocessor.hxx
-    ../../include/kesrv/processmanager/processmanager.hxx
-    ../../include/kesrv/processmanager/procfs.hxx
-    ../../include/kesrv/util/posixerror.hxx
-    callstack_posix.cxx
-    processmgr/processmanager.cxx
-    processmgr/procfs.cxx
-    util/posixerror_posix.cxx
-)
+if(KES_LINUX EQUAL 1)
+    set(PLATFORM_FILES
+        ../../include/kesrv/requestprocessor.hxx
+        ../../include/kesrv/processmanager/processmanager.hxx
+        ../../include/kesrv/processmanager/procfs.hxx
+        ../../include/kesrv/util/posixerror.hxx
+        callstack_posix.cxx
+        processmgr/processmanager.cxx
+        processmgr/procfs.cxx
+        util/posixerror_posix.cxx
+    )
+endif()
 
 add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/callstack.hxx
