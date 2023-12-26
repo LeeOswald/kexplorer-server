@@ -36,8 +36,9 @@ private:
     {
         using Ptr = std::unique_ptr<ProcessInfo>;
 
-        explicit ProcessInfo(ProcFs::Stat&& stat) noexcept
-            : stat(std::move(stat))
+        explicit ProcessInfo(uint32_t timestamp, ProcFs::Stat&& stat) noexcept
+            : timestamp(timestamp)
+            , stat(std::move(stat))
         {}
 
         ProcessInfo(const ProcessInfo&) = delete;
@@ -45,6 +46,8 @@ private:
 
         Json::Value serialize(Json::Document& doc);
 
+        uint32_t timestamp;
+        bool newcomer = false;
         ProcFs::Stat stat;
         std::optional<std::string> comm;
         std::optional<std::string> exe;
@@ -63,12 +66,15 @@ private:
         Session& operator=(const Session&) = delete;
 
         uint32_t sessionId;
+        uint32_t timestamp = 0;
         std::unordered_map<pid_t, ProcessInfo::Ptr> processes;
+        std::vector<pid_t> removedPids;
     };
 
     bool process(Session* session, const char* key, const Json::Document& request, Json::Document& response);
-    bool listProcesses(Session* session, const Json::Document& request, Json::Document& response);
-    
+    bool listProcesses(bool initial, Session* session, const Json::Document& request, Json::Document& response);
+    ProcessInfo::Ptr readProcess(pid_t pid, uint32_t timestamp);
+    void readProcesses(bool initial, Session* session);
 
     IRequestProcessor* m_rp;
     Log::ILog* m_log;

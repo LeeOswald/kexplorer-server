@@ -12,6 +12,7 @@ namespace
 const char* const s_commands[] = 
 {
     "list_processes",
+    "diff_processes"
 };
 
 } // namespace {}
@@ -74,37 +75,110 @@ void ProcessManager::endSession(uint32_t id)
 bool ProcessManager::process(Session* session, const char* key, const Json::Document& request, Json::Document& response)
 {
     if (!std::strcmp(key, "list_processes"))
-        return listProcesses(session, request, response);
+        return listProcesses(true, session, request, response);
+    else if (!std::strcmp(key, "diff_processes"))
+        return listProcesses(false, session, request, response);
 
     return false;
 }
 
-bool ProcessManager::listProcesses(Session* session, const Json::Document& request, Json::Document& response)
+bool ProcessManager::listProcesses(bool initial, Session* session, const Json::Document& request, Json::Document& response)
 {
+    readProcesses(initial, session);
+
     auto& a = response.GetAllocator();
 
-    Json::Value jProcessArray(Json::kArrayType);
+    // list existing/new processes
+    {
+        Json::Value jProcessArray(Json::kArrayType);
+        
+        for (auto& process: session->processes)
+        {
+            auto jProcess = process.second->serialize(response);
+            jProcessArray.PushBack(std::move(jProcess), a);
+        }
 
-    session->processes.clear();
+        response.AddMember("process_list", std::move(jProcessArray), a);
+    }
+    
+    // list deleted processes
+    if (!initial)
+    {
+        Json::Value jRemovedProcessArray(Json::kArrayType);
+
+        for (auto pid: session->removedPids)
+        {
+            jRemovedProcessArray.PushBack(Json::Value(pid), a);
+        }
+
+        response.AddMember("removed_process_list", std::move(jRemovedProcessArray), a);
+    }
+
+    response.AddMember("status", Json::Value("success", a), a);
+    return true;
+}
+
+void ProcessManager::readProcesses(bool initial, Session* session)
+{
+    ++session->timestamp;
+
+    if (initial)
+        session->processes.clear();
+
+    session->removedPids.clear();
 
     auto pids = m_procFs.enumeratePids();
     for (auto pid: pids)
     {
-        auto r = session->processes.insert({ pid, std::make_unique<ProcessInfo>(m_procFs.readStat(pid)) });
-        auto info = r.first->second.get();
+        auto process = readProcess(pid, session->timestamp);
+        if (!initial)
+        {
+            // check if this is a new process
+            auto it = session->processes.find(pid);
+            if (it == session->processes.end())
+            {
+                m_log->write(Log::Level::Info, "NEW process %d [%s]", pid, process->stat.comm.c_str());
 
-        info->comm = m_procFs.readComm(pid);
-        info->exe = m_procFs.readExePath(pid);
-        info->cmdLine = m_procFs.readCmdLine(pid);
-
-        auto jProcess = info->serialize(response);
-        jProcessArray.PushBack(std::move(jProcess), a);
+                process->newcomer = true;
+                session->processes.insert({ pid, std::move(process) });
+            }
+            else
+            {
+                // update the existing process
+                std::swap(process, it->second);
+            }
+        }
+        else
+        {
+            session->processes.insert({ pid, std::move(process) });
+        }
     }
 
-    response.AddMember("process_list", std::move(jProcessArray), a);
+    if (!initial)
+    {
+        // detect deleted processes
+        for (auto it = session->processes.begin(); it != session->processes.end(); ++it)
+        {
+            if (it->second->timestamp < session->timestamp)
+            {
+                m_log->write(Log::Level::Info, "DELETED process %d [%s]", it->first, it->second->stat.comm.c_str());
 
-    response.AddMember("status", Json::Value("success", a), a);
-    return true;
+                session->removedPids.push_back(it->first);
+                session->processes.erase(it);
+            }
+        }
+    }
+}
+
+ProcessManager::ProcessInfo::Ptr ProcessManager::readProcess(pid_t pid, uint32_t timestamp)
+{
+    auto process = std::make_unique<ProcessInfo>(timestamp, m_procFs.readStat(pid));
+
+    process->comm = m_procFs.readComm(pid);
+    process->exe = m_procFs.readExePath(pid);
+    process->cmdLine = m_procFs.readCmdLine(pid);
+
+    return process;
 }
 
 Json::Value ProcessManager::ProcessInfo::serialize(Json::Document& doc)
@@ -114,6 +188,11 @@ Json::Value ProcessManager::ProcessInfo::serialize(Json::Document& doc)
     Json::Value j(rapidjson::kObjectType);
 
     j.AddMember("pid", Json::Value(stat.pid), a);
+
+    if (newcomer)
+    {
+        j.AddMember("newcomer", Json::Value(true), a);
+    }
     
     if (!stat.valid)
     {
