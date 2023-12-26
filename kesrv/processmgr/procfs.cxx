@@ -18,6 +18,21 @@ namespace Kes
 namespace ProcFs
 {
 
+namespace 
+{
+
+struct DirCloser
+{
+    void operator()(DIR* d) noexcept
+    {
+        ::closedir(d);
+    }
+};
+
+using DirHolder = Util::AutoPtr<DIR, DirCloser>;
+
+} // namespace {}
+
 ProcFs::ProcFs(Log::ILog* log)
     : m_log(log)
 {
@@ -397,7 +412,7 @@ std::vector<pid_t> ProcFs::enumeratePids() noexcept
     try
     {
         auto path = root();
-        Util::AutoPtr<DIR, decltype(::closedir), ::closedir> dir(::opendir(path.c_str()));
+        DirHolder dir(::opendir(path.c_str()));
         if (!dir)
         {
             auto e = errno;

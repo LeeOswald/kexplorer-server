@@ -62,7 +62,7 @@ KESCOMMON_EXPORT DecodedStackFrames decodeStackTrace(const StackFrames& trace)
             else
             {
                 int status = 0;
-                Util::AutoPtr<char, decltype(::free), ::free> demangled(abi::__cxa_demangle(dlinfo.dli_sname, nullptr, 0, &status));
+                Util::CrtAutoPtr<char> demangled(abi::__cxa_demangle(dlinfo.dli_sname, nullptr, 0, &status));
                 if (status == 0 && demangled)
                 {
                     decoded.emplace_back(frame, dlinfo.dli_fname, demangled, dlinfo.dli_sname);

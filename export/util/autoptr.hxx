@@ -14,9 +14,10 @@ namespace Util
 // this is required by a huge number of C-style APIs
 //
 
-template <typename T, typename FreeFuncT, FreeFuncT* Free>
+template <typename T, typename DeleterT>
 struct AutoPtr final
 {
+    using Deleter = DeleterT;
     using Value = T;
     using Pointer = Value*;
     using ConstPointer = const Value*;
@@ -93,7 +94,10 @@ struct AutoPtr final
     void reset(Pointer ptr = nullptr)
     {
         if (m_ptr)
-            Free(m_ptr);
+        {
+            Deleter d;
+            d(m_ptr);
+        }
 
         m_ptr = ptr;
     }
@@ -101,6 +105,19 @@ struct AutoPtr final
 private:
     Pointer m_ptr = nullptr;
 };
+
+
+// malloc/free deleter
+struct CrtDeleter
+{
+    void operator()(void* p) noexcept
+    {
+        ::free(p);
+    }
+};
+
+template <typename T>
+using CrtAutoPtr = AutoPtr<T, CrtDeleter>;
 
 
 } // namespace Util {}
