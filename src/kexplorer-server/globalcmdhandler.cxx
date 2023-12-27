@@ -1,6 +1,8 @@
 #include "globalcmdhandler.hxx"
 #include "kexplorer-version.h"
 
+#include <kesrv/util/request.hxx>
+
 #include <sstream>
 
 
@@ -48,7 +50,7 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::
     {
         m_log->write(Log::Level::Info, "GlobalCmdHandler: [stop] command received");
 
-        response.AddMember("status", Json::Value("success", a), a);
+        response.AddMember(Json::GenericStringRef(Kes::Util::Response::Props::Status::idstr()), Json::Value("success", a), a);
 
         m_exitCondition.set();
 
@@ -61,7 +63,7 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::
         std::ostringstream ss;
         ss << KES_APPLICATION_NAME << " " << KES_VERSION_STR << " " << KES_COPYRIGHT;
 
-        response.AddMember("status", Json::Value("success", a), a);
+        response.AddMember(Json::GenericStringRef(Kes::Util::Response::Props::Status::idstr()), Json::Value("success", a), a);
         auto v = ss.str();
         response.AddMember("version", Json::Value(v.c_str(), v.length(), a), a);
 

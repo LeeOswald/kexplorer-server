@@ -25,7 +25,7 @@ std::string RequestProcessor::process(uint32_t sessionId, const char* request, s
             return Util::Response::fail("Not a JSON object");
         }
 
-        auto requestKey = docRequest.FindMember("request");
+        auto requestKey = docRequest.FindMember(Kes::Util::Request::Props::Command::idstr());
         if (requestKey != docRequest.MemberEnd())
         {
             auto key = requestKey->value.GetString();

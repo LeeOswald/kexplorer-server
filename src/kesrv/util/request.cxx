@@ -1,3 +1,4 @@
+#include <kesrv/knownprops.hxx>
 #include <kesrv/util/request.hxx>
 
 
@@ -17,12 +18,23 @@ KESRV_EXPORT std::string simple(const char* command)
     Json::Writer<Json::StringBuffer> writer(sb);
     
     writer.StartObject();
-    writer.Key("request");
+    writer.Key(Props::Command::idstr());
     writer.String(command);
     writer.EndObject();
 
     return sb.GetString();
 }
+
+
+namespace Private
+{
+
+void registerAll()
+{
+    Kes::registerProperty(new PropertyInfoWrapper<Props::Command>);
+}
+
+} // namespace Private {}
 
 } // namespace Request {}
 
@@ -35,13 +47,24 @@ KESRV_EXPORT std::string fail(const char* reason)
     Json::Writer<Json::StringBuffer> writer(sb);
     
     writer.StartObject();
-    writer.Key("status");
+    writer.Key(Props::Status::idstr());
     writer.String("fail");
-    writer.Key("reason");
+    writer.Key(Props::Reason::idstr());
     writer.String(reason);
 
     return sb.GetString();
 }
+
+namespace Private
+{
+
+void registerAll()
+{
+    Kes::registerProperty(new PropertyInfoWrapper<Props::Status>);
+    Kes::registerProperty(new PropertyInfoWrapper<Props::Reason>);
+}
+
+} // namespace Private {}
 
 
 } // namespace Response {}
