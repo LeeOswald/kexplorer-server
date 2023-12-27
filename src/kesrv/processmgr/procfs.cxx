@@ -70,7 +70,7 @@ Stat ProcFs::readStat(pid_t pid) noexcept
             return result;
         }
 
-        result.startTime = fileStat.st_ctime;
+        result.ruid = fileStat.st_uid;
 
         path.append("/stat");
 
@@ -81,8 +81,6 @@ Stat ProcFs::readStat(pid_t pid) noexcept
             result.error = "Failed to open process";
             return result;
         }
-
-        result.ruid = fileStat.st_uid;
 
         std::string s;
         std::getline(stat, s);
@@ -280,6 +278,8 @@ Stat ProcFs::readStat(pid_t pid) noexcept
             ++end;
         }
 
+        result.startTime = fromRelativeTime(result.starttime);
+
         result.valid = true;
     }
     catch (std::exception& e)
@@ -291,7 +291,7 @@ Stat ProcFs::readStat(pid_t pid) noexcept
     return result;
 }
 
-std::optional<std::string> ProcFs::readComm(pid_t pid) noexcept
+std::string ProcFs::readComm(pid_t pid) noexcept
 {
     try
     {
@@ -310,10 +310,10 @@ std::optional<std::string> ProcFs::readComm(pid_t pid) noexcept
         LogDebug(m_log, "comm for process %d could not be read: %s", pid, e.what());
     }
 
-    return std::nullopt;
+    return std::string();
 }
 
-std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
+std::string ProcFs::readExePath(pid_t pid) noexcept
 {
     try
     {
@@ -326,7 +326,7 @@ std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
         if (::lstat(path.c_str(), &sb) == -1)
         {
             LogDebug(m_log, "exe link for process %d could not be opened: %d", pid, errno);
-            return std::nullopt;
+            return std::string();
         }
         else
         {
@@ -346,7 +346,7 @@ std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
             if (r < 0)
             {
                 LogDebug(m_log, "Failed to read exe link for process %d: %d", pid, errno);
-                return std::nullopt;
+                return std::string();
             }
 
             exe.resize(std::strlen(exe.c_str())); // cut extra '\0'
@@ -359,10 +359,10 @@ std::optional<std::string> ProcFs::readExePath(pid_t pid) noexcept
         LogDebug(m_log, "exe link for process %d could not be read: %s", pid, e.what());
     }
 
-    return std::nullopt;
+    return std::string();
 }
 
-std::optional<std::string> ProcFs::readCmdLine(pid_t pid) noexcept
+std::string ProcFs::readCmdLine(pid_t pid) noexcept
 {
     try
     {
@@ -403,7 +403,7 @@ std::optional<std::string> ProcFs::readCmdLine(pid_t pid) noexcept
         LogDebug(m_log, "cmdline for process %d could not be read: %s", pid, e.what());
     }
 
-    return std::nullopt;
+    return std::string();
 }
 
 std::vector<pid_t> ProcFs::enumeratePids() noexcept
@@ -449,6 +449,68 @@ std::vector<pid_t> ProcFs::enumeratePids() noexcept
     }
 
     return result;
+}
+
+uint64_t ProcFs::getBootTimeImpl() noexcept
+{
+    std::string path = root();
+    path.append("/stat");
+
+    std::ifstream stream(path);
+    if (!stream.good())
+    {
+        LogError(m_log, "Failed to open %s", path.c_str());
+        return 0;
+    }
+    else
+    {
+        std::string s;
+        while (std::getline(stream, s))
+        {
+            if (s.find("btime") == 0)
+            {
+                auto remainder = s.substr(6);
+                if (!remainder.empty())
+                {
+                    char* end = nullptr;
+                    return std::strtoull(remainder.c_str(), &end, 10);
+                }
+
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+uint64_t ProcFs::getBootTime() noexcept
+{
+    static uint64_t bootTime = getBootTimeImpl();
+    return bootTime;
+}
+
+Time ProcFs::fromRelativeTime(uint64_t relative) noexcept
+{
+    static long clockRes = ::sysconf(_SC_CLK_TCK);
+    assert(clockRes > 0);
+
+    auto bootTime = getBootTime();
+    auto time = relative / clockRes;
+
+    struct tm expanded = {};
+    time_t seconds = bootTime + time;
+    ::localtime_r(&seconds, &expanded);
+
+    return Time(
+        expanded.tm_year + 1900,
+        Time::Month(expanded.tm_mon),
+        expanded.tm_mday,
+        expanded.tm_hour,
+        expanded.tm_min,
+        expanded.tm_sec,
+        0
+    );
 }
 
 } // namespace ProcFs {}

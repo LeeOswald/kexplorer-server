@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kesrv/log.hxx>
+#include <kesrv/time.hxx>
 
 #include <vector>
 
@@ -72,7 +73,7 @@ struct KESRV_EXPORT Stat
     /*50*/ unsigned long env_end = 0;
     /*51*/ int exit_code = 0;
 
-    time_t startTime = 0;                                // process start time
+    Time startTime;                                // process start time
     uid_t ruid = uid_t(-1);                              // real user ID of process owner
 
     Stat() = default;
@@ -87,13 +88,18 @@ public:
     static std::string root();
 
     Stat readStat(pid_t pid) noexcept;
-    std::optional<std::string> readComm(pid_t pid) noexcept;
-    std::optional<std::string> readExePath(pid_t pid) noexcept;
-    std::optional<std::string> readCmdLine(pid_t pid) noexcept;
+    std::string readComm(pid_t pid) noexcept;
+    std::string readExePath(pid_t pid) noexcept;
+    std::string readCmdLine(pid_t pid) noexcept;
 
     std::vector<pid_t> enumeratePids() noexcept;
 
+    uint64_t getBootTime() noexcept;
+
 private:
+    uint64_t getBootTimeImpl() noexcept;
+    Time fromRelativeTime(uint64_t relative) noexcept;
+
     Log::ILog* m_log;
 };
 

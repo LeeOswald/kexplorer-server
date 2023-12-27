@@ -49,9 +49,9 @@ private:
         uint32_t timestamp;
         bool newcomer = false;
         ProcFs::Stat stat;
-        std::optional<std::string> comm;
-        std::optional<std::string> exe;
-        std::optional<std::string> cmdLine;
+        std::string comm;
+        std::string exe;
+        std::string cmdLine;
     };
 
     struct Session

@@ -2,10 +2,12 @@ if(KES_LINUX EQUAL 1)
     set(PLATFORM_FILES
         ../../include/kesrv/requestprocessor.hxx
         ../../include/kesrv/processmanager/processmanager.hxx
+        ../../include/kesrv/processmanager/processprops.hxx
         ../../include/kesrv/processmanager/procfs.hxx
         ../../include/kesrv/util/posixerror.hxx
         callstack_posix.cxx
         processmgr/processmanager.cxx
+        processmgr/processprops.cxx
         processmgr/procfs.cxx
         util/posixerror_posix.cxx
     )
@@ -24,6 +26,7 @@ add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/property.hxx
     ../../include/kesrv/sourcelocation.hxx
     ../../include/kesrv/stringliteral.hxx
+    ../../include/kesrv/time.hxx
     ../../include/kesrv/util/autoptr.hxx
     ../../include/kesrv/util/continuousbuffer.hxx
     ../../include/kesrv/util/crc32.hxx
@@ -35,6 +38,7 @@ add_library(${KES_SRVLIB} SHARED
     exception.cxx
     init.cxx
     knownprops.cxx
+    time.cxx
     util/exceptionutil.cxx
     util/format.cxx
     util/netutil.cxx

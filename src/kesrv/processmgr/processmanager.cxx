@@ -1,4 +1,5 @@
 #include <kesrv/processmanager/processmanager.hxx>
+#include <kesrv/processmanager/processprops.hxx>
 
 namespace Kes
 {
@@ -187,34 +188,34 @@ Json::Value ProcessManager::ProcessInfo::serialize(Json::Document& doc)
 
     Json::Value j(rapidjson::kObjectType);
 
-    j.AddMember("pid", Json::Value(stat.pid), a);
+    j.AddMember(Json::GenericStringRef(ProcessProps::Pid::idstr()), Json::Value(stat.pid), a);
 
     if (newcomer)
     {
-        j.AddMember("newcomer", Json::Value(true), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Newcomer::idstr()), Json::Value(true), a);
     }
     
     if (!stat.valid)
     {
-        j.AddMember("error", Json::Value(stat.error.c_str(), a), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Error::idstr()), Json::Value(stat.error.c_str(), a), a);
     }
     else
     {    
-        j.AddMember("ppid", Json::Value(stat.ppid), a);
-        j.AddMember("pgrp", Json::Value(stat.pgrp), a);
-        j.AddMember("tpgid", Json::Value(stat.tpgid), a);
-        j.AddMember("session", Json::Value(stat.session), a);
-        j.AddMember("comm", Json::Value(stat.comm.c_str(), a), a);
-        j.AddMember("ruid", Json::Value(stat.ruid), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::PPid::idstr()), Json::Value(stat.ppid), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::PGrp::idstr()), Json::Value(stat.pgrp), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Tpgid::idstr()), Json::Value(stat.tpgid), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Session::idstr()), Json::Value(stat.session), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Comm::idstr()), Json::Value(stat.comm.c_str(), a), a);
+        j.AddMember(Json::GenericStringRef(ProcessProps::Ruid::idstr()), Json::Value(stat.ruid), a);
 
-        if (comm)
-            j.AddMember("full_comm", Json::Value(comm->c_str(), a), a);
+        if (!comm.empty())
+            j.AddMember(Json::GenericStringRef(ProcessProps::StatComm::idstr()), Json::Value(comm.c_str(), a), a);
 
-        if (exe)
-            j.AddMember("exe", Json::Value(exe->c_str(), a), a);
+        if (!exe.empty())
+            j.AddMember(Json::GenericStringRef(ProcessProps::Exe::idstr()), Json::Value(exe.c_str(), a), a);
 
-        if (cmdLine)
-            j.AddMember("cmdLine", Json::Value(cmdLine->c_str(), a), a);
+        if (!cmdLine.empty())
+            j.AddMember(Json::GenericStringRef(ProcessProps::CmdLine::idstr()), Json::Value(cmdLine.c_str(), a), a);
     }
 
     return j;

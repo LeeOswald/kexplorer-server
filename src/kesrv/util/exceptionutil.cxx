@@ -67,7 +67,7 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
         {
             out << "\n" << indent;
 
-            auto pi = ExceptionProps::lookupProperty(prop.id);
+            auto pi = lookupProperty(prop.id);
             if (pi)
             {
                 out << pi->name() << ": ";

@@ -125,6 +125,23 @@ private:
 };
 
 
+namespace ExceptionProps
+{
+
+namespace Private
+{
+
+void registerAll();
+
+} // namespace Private {}
+
+
+using DecodedError = PropertyInfo<std::string, KES_PROPID("decoded_error"), "Error message", PropertyFormatter<std::string>>;
+using PosixErrorCode = PropertyInfo<int, KES_PROPID("posix_error_code"), "POSIX error code", PropertyFormatter<int>>;
+
+
+} // ExceptionProps {}
+
 
 } // namespace Kes {}
 

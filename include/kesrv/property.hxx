@@ -6,6 +6,7 @@
 
 #include <any>
 #include <ostream>
+#include <typeinfo>
 #include <vector>
 
 
@@ -15,7 +16,7 @@ namespace Kes
 using PropId = uint32_t;
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrName, class FormatterT>
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
 class PropertyInfo final
 {
 public:
@@ -30,11 +31,21 @@ public:
         : m_value(std::forward<T>(value))
     {}
 
+    static constexpr const std::type_info& type() noexcept
+    {
+        return typeid(ValueT);
+    }
+
     static constexpr PropId id() noexcept
     {
         return Id::value;
     }
 
+    static constexpr const char* idstr() noexcept
+    {
+        return fromStringLiteral<PrIdStr>();
+    }
+    
     constexpr ValueType&& value() && noexcept
     {
         return std::move(m_value);
@@ -81,8 +92,26 @@ struct Property
 };
 
 
+template <typename T, typename = void>
+struct PropertyFormatter;
+
+
 template <typename T>
-struct PropertyFormatter
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
+{
+    using Type = T;
+    void operator()(const Property& v, std::ostream& s) { s << std::boolalpha << std::any_cast<T>(v.value); }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value>>
+{
+    using Type = T;
+    void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
+};
+
+template <typename T>
+struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
 {
     using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
@@ -92,8 +121,11 @@ struct PropertyFormatter
 struct IPropertyInfo
 {
     virtual PropId id() const = 0;
+    virtual const char* idstr() const = 0;
     virtual const char* name() const = 0;
     virtual void format(const Property& v, std::ostream& s) = 0;
+
+    virtual ~IPropertyInfo() {}
 };
 
 
@@ -104,6 +136,11 @@ struct PropertyInfoWrapper
     PropId id() const override
     {
         return PropertyInfoT::id();
+    }
+
+    const char* idstr() const override
+    {
+        return PropertyInfoT::idstr();
     }
 
     const char* name() const override
@@ -122,5 +159,5 @@ struct PropertyInfoWrapper
 } // namespace Kes {}
 
 
-#define KES_PROPID(s)   Kes::Util::crc32(s)
+#define KES_PROPID(s)   Kes::Util::crc32(s), s
 

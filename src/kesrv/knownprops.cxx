@@ -1,4 +1,7 @@
+#include <kesrv/exception.hxx>
 #include <kesrv/knownprops.hxx>
+#include <kesrv/util/format.hxx>
+
 
 #include <mutex>
 #include <unordered_map>
@@ -6,62 +9,57 @@
 namespace Kes
 {
 
-namespace ExceptionProps
-{
-
 namespace
 {
 
-struct Registry
+struct
 {
     std::mutex mutex;
-    std::unordered_map<PropId, IPropertyInfo*> props;
-};
+    std::unordered_map<PropId, IPropertyInfo*> propsById;
+    std::unordered_map<std::string, IPropertyInfo*> propsByName;
+} s_registry;
 
-Registry* registry()
-{
-    // this will not ever be deleted because exception handlers
-    // may lookup properties during program termination
-    static Registry* s_registry = new Registry;
-    return s_registry;
-}
 
 } // namespace {}
 
 
 KESRV_EXPORT void registerProperty(IPropertyInfo* pi)
 {
-    auto r = registry();
-    std::lock_guard l(r->mutex);
+    std::lock_guard l(s_registry.mutex);
 
-    [[maybe_unused]] auto ret = r->props.insert({ pi->id(), pi });
-    assert(ret.second); // check if the property has not been registered yet
+    auto ret1 = s_registry.propsById.insert({ pi->id(), pi });
+    if (!ret1.second)
+    {
+        throw Exception(KES_HERE(), Util::format("Property with ID %08x already registered", pi->id()));
+    }
+
+    auto ret2 = s_registry.propsByName.insert({ pi->idstr(), pi });
+    if (!ret2.second)
+    {
+        throw Exception(KES_HERE(), Util::format("Property with ID %s already registered", pi->idstr()));
+    }
 }
 
 KESRV_EXPORT IPropertyInfo* lookupProperty(PropId id)
 {
-    auto r = registry();
-    std::lock_guard l(r->mutex);
+    std::lock_guard l(s_registry.mutex);
 
-    auto it = r->props.find(id);
-    if (it == r->props.end())
+    auto it = s_registry.propsById.find(id);
+    if (it == s_registry.propsById.end())
         return nullptr;
 
     return it->second;
 }
 
-
-namespace Private
+KESRV_EXPORT IPropertyInfo* lookupProperty(const char* id)
 {
+    std::lock_guard l(s_registry.mutex);
 
-void registerAll()
-{
-    registerProperty(new PropertyInfoWrapper<DecodedError>);
-    registerProperty(new PropertyInfoWrapper<PosixErrorCode>);
+    auto it = s_registry.propsByName.find(id);
+    if (it == s_registry.propsByName.end())
+        return nullptr;
+
+    return it->second;
 }
-
-} // namespace Private {}
-
-} // namespace ExceptionProps {}
 
 } // namespace Kes {}
