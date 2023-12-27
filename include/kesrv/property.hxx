@@ -14,6 +14,7 @@ namespace Kes
 {
 
 using PropId = uint32_t;
+constexpr PropId InvalidPropId = PropId(-1);
 
 
 template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
@@ -72,23 +73,28 @@ private:
 };
 
 
+struct IPropertyInfo;
+
 struct Property
 {
     Property() = default;
 
-    Property(PropId id, std::any&& value) noexcept
+    Property(PropId id, std::any&& value, IPropertyInfo* info = nullptr) noexcept
         : id(id)
         , value(std::move(value))
+        , info(info)
     {}
 
     template <typename ValueT>
-    Property(PropId id, ValueT&& value) noexcept
+    Property(PropId id, ValueT&& value, IPropertyInfo* info = nullptr) noexcept
         : id(id)
         , value(std::forward<ValueT>(value))
+        , info(info)
     {}
 
-    PropId id;
+    PropId id = InvalidPropId;
     std::any value;
+    IPropertyInfo* info = nullptr;
 };
 
 
@@ -104,7 +110,7 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
 };
 
 template <typename T>
-struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value>>
+struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
 {
     using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
@@ -120,6 +126,7 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
 
 struct IPropertyInfo
 {
+    virtual const std::type_info& type() const = 0;
     virtual PropId id() const = 0;
     virtual const char* idstr() const = 0;
     virtual const char* name() const = 0;
@@ -133,6 +140,11 @@ template <class PropertyInfoT>
 struct PropertyInfoWrapper
     : public IPropertyInfo
 {
+    const std::type_info& type() const override
+    {
+        return PropertyInfoT::type();
+    }
+
     PropId id() const override
     {
         return PropertyInfoT::id();

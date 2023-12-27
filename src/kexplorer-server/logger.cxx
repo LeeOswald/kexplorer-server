@@ -17,8 +17,6 @@ namespace Private
 
 Logger::~Logger()
 {
-    if (m_file >= 0)
-        ::close(m_file);
 }
 
 Logger::Logger(Kes::Log::Level level, const char* fileName)
@@ -30,8 +28,6 @@ Logger::Logger(Kes::Log::Level level, const char* fileName)
 
     if (::flock(m_file, LOCK_EX | LOCK_NB) == -1)
     {
-        ::close(m_file);
-
         if (errno == EWOULDBLOCK)
             throw Exception(KES_HERE(), "Server is already running");
 
