@@ -17,11 +17,12 @@ using PropId = uint32_t;
 constexpr PropId InvalidPropId = PropId(-1);
 
 
-template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT>
+template <typename ValueT, PropId PrId, StringLiteral PrIdStr, StringLiteral PrName, class FormatterT, typename BaseT = ValueT>
 class PropertyInfo final
 {
 public:
     using ValueType = ValueT;
+    using BaseType = BaseT;
     using Id = std::integral_constant<PropId, PrId>;
     using Formatter = FormatterT;
 
@@ -35,6 +36,11 @@ public:
     static constexpr const std::type_info& type() noexcept
     {
         return typeid(ValueT);
+    }
+
+    static constexpr const std::type_info& base() noexcept
+    {
+        return typeid(BaseT);
     }
 
     static constexpr PropId id() noexcept
@@ -101,25 +107,26 @@ struct Property
 template <typename T, typename = void>
 struct PropertyFormatter;
 
+struct NullPropertyFormatter
+{
+    void operator()([[maybe_unused]] const Property& v, [[maybe_unused]] std::ostream& s) {  }
+};
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, bool>::value>>
 {
-    using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::boolalpha << std::any_cast<T>(v.value); }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>>
 {
-    using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
 };
 
 template <typename T>
 struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value>>
 {
-    using Type = T;
     void operator()(const Property& v, std::ostream& s) { s << std::any_cast<T>(v.value); }
 };
 
@@ -127,11 +134,13 @@ struct PropertyFormatter<T, std::enable_if_t<std::is_same<T, std::string>::value
 struct IPropertyInfo
 {
     virtual const std::type_info& type() const = 0;
+    virtual const std::type_info& base() const = 0;
     virtual PropId id() const = 0;
     virtual const char* idstr() const = 0;
     virtual const char* name() const = 0;
     virtual void format(const Property& v, std::ostream& s) = 0;
 
+protected:
     virtual ~IPropertyInfo() {}
 };
 
@@ -143,6 +152,11 @@ struct PropertyInfoWrapper
     const std::type_info& type() const override
     {
         return PropertyInfoT::type();
+    }
+
+    const std::type_info& base() const override
+    {
+        return PropertyInfoT::base();
     }
 
     PropId id() const override

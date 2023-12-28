@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kesrv/empty.hxx>
 #include <kesrv/json.hxx>
 #include <kesrv/log.hxx>
 #include <kesrv/property.hxx>
@@ -17,16 +18,27 @@ public:
     using Array = std::vector<std::unique_ptr<PropertyBag>>;
     using Table = std::unordered_map<std::string, std::unique_ptr<PropertyBag>>;
 
-    explicit PropertyBag(Property&& prop) noexcept
-        : m_var(std::move(prop))
+    PropertyBag() noexcept
+        : m_name()
+        , m_var(Empty())
     {}
 
-    explicit PropertyBag(Array&& a) noexcept
-        : m_var(std::move(a))
+    template <typename NameT>
+    explicit PropertyBag(NameT&& name, Property&& prop)
+        : m_name(std::forward<NameT>(name))
+        , m_var(std::move(prop))
     {}
 
-    explicit PropertyBag(Table&& t) noexcept
-        : m_var(std::move(t))
+    template <typename NameT>
+    explicit PropertyBag(NameT&& name, Array&& a)
+        : m_name(std::forward<NameT>(name))
+        , m_var(std::move(a))
+    {}
+
+    template <typename NameT>
+    explicit PropertyBag(NameT&& name, Table&& t)
+        : m_name(std::forward<NameT>(name))
+        , m_var(std::move(t))
     {}
 
     PropertyBag(const PropertyBag&) = delete;
@@ -34,57 +46,71 @@ public:
     PropertyBag& operator=(const PropertyBag&) = delete;
     PropertyBag& operator=(PropertyBag&&) = default;
 
-    constexpr bool isProperty() const noexcept
+    constexpr bool isEmpty() const noexcept
     {
         return m_var.index() == 0;
     }
 
-    constexpr bool isArray() const noexcept
+    constexpr bool isProperty() const noexcept
     {
         return m_var.index() == 1;
     }
 
-    constexpr bool isTable() const noexcept
+    constexpr bool isArray() const noexcept
     {
         return m_var.index() == 2;
     }
 
+    constexpr bool isTable() const noexcept
+    {
+        return m_var.index() == 3;
+    }
+
     constexpr const Property& property() const noexcept
     {
-        return std::get<0>(m_var);
+        return std::get<1>(m_var);
     }
 
     constexpr Property& property() noexcept
     {
-        return std::get<0>(m_var);
+        return std::get<1>(m_var);
     }
 
     constexpr const Array& array() const noexcept
     {
-        return std::get<1>(m_var);
+        return std::get<2>(m_var);
     }
 
     constexpr Array& array() noexcept
     {
-        return std::get<1>(m_var);
+        return std::get<2>(m_var);
     }
 
     constexpr const Table& table() const noexcept
     {
-        return std::get<2>(m_var);
+        return std::get<3>(m_var);
     }
 
     constexpr Table& table() noexcept
     {
-        return std::get<2>(m_var);
+        return std::get<3>(m_var);
+    }
+
+    constexpr const std::string& name() const noexcept
+    {
+        return m_name;
     }
 
 private:
-    std::variant<Property, Array, Table> m_var;
+    std::string m_name;
+    std::variant<Empty, Property, Array, Table> m_var;
 };
 
 
-Property propertyFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
+KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
+KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
+KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
 
+KESRV_EXPORT PropertyBag propertyBagFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
 
 } // namespace Kes {}

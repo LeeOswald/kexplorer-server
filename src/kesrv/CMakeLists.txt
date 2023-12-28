@@ -16,6 +16,7 @@ endif()
 add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/callstack.hxx
     ../../include/kesrv/condition.hxx
+    ../../include/kesrv/empty.hxx
     ../../include/kesrv/exception.hxx
     ../../include/kesrv/fixedstring.hxx
     ../../include/kesrv/json.hxx
