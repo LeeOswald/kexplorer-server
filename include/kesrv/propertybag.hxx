@@ -2,8 +2,8 @@
 
 #include <kesrv/empty.hxx>
 #include <kesrv/json.hxx>
-#include <kesrv/log.hxx>
 #include <kesrv/property.hxx>
+#include <kesrv/sourcelocation.hxx>
 
 #include <unordered_map>
 #include <variant>
@@ -107,10 +107,26 @@ private:
 };
 
 
-KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
-KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
-KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
+struct IPropertyErrorHandler
+{
+    enum class Result
+    {
+        Continue,
+        Throw
+    };
 
-KESRV_EXPORT PropertyBag propertyBagFromJson(const char* name, const Json::Value& v, Log::ILog* log = nullptr);
+    virtual Result handle(SourceLocation where, const std::string& message) noexcept = 0;
+
+protected:
+    virtual ~IPropertyErrorHandler() {}
+};
+
+
+KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
+KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
+KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
+
+KESRV_EXPORT PropertyBag propertyBagFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
+
 
 } // namespace Kes {}

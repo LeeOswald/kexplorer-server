@@ -57,15 +57,15 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
         out << e.what();
     }
 
-    out << "\nFile: " << e.source().file_name();
-    out << "\nLine: " << e.source().line();
+    out << "\n" << indent << " File: " << e.source().file_name();
+    out << "\n" << indent << " Line: " << e.source().line();
 
     auto properties = e.properties();
     if (properties)
     {
         for (auto& prop: *properties)
         {
-            out << "\n" << indent;
+            out << "\n " << indent;
 
             auto pi = lookupProperty(prop.id);
             if (pi)
@@ -75,7 +75,7 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
             }
             else
             {
-                out << Util::format("0x%08x: ???", prop.id);
+                out << Util::format(" 0x%08x: ???", prop.id);
             }
         }
     }

@@ -32,6 +32,18 @@ void registerProps()
     );
 }
 
+struct ErrorHandler :
+    public Kes::IPropertyErrorHandler
+{
+    Result handle(Kes::SourceLocation where, const std::string& message) noexcept override
+    {
+        Logger::instance()->write(Kes::Log::Level::Warning, "%s", message.c_str());
+        return Result::Continue;
+    }
+};
+
+static ErrorHandler g_errorHandler;
+
 
 TEST(Kes_PropertyBag, propertyFromJson)
 {
@@ -46,7 +58,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, BoolProperty::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), BoolProperty::idstr());
@@ -57,7 +69,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, IntProperty::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), IntProperty::idstr());
@@ -68,7 +80,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, UIntProperty::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), UIntProperty::idstr());
@@ -79,7 +91,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, Int64Property::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), Int64Property::idstr());
@@ -90,7 +102,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, UInt64Property::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), UInt64Property::idstr());
@@ -101,7 +113,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         ASSERT_NE(m, doc.MemberEnd());
 
         {
-            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson(m->name.GetString(), m->value, &g_errorHandler);
             EXPECT_EQ(prop.id, StringProperty::id());
             ASSERT_NE(prop.info, nullptr);
             EXPECT_STREQ(prop.info->idstr(), StringProperty::idstr());
@@ -109,7 +121,7 @@ TEST(Kes_PropertyBag, propertyFromJson)
         }
 
         {
-            auto prop = Kes::propertyFromJson("xxx", m->value, Logger::instance());
+            auto prop = Kes::propertyFromJson("xxx", m->value, &g_errorHandler);
             EXPECT_FALSE(prop.value.has_value());
             EXPECT_EQ(prop.id, Kes::InvalidPropId);
         }
@@ -129,7 +141,7 @@ TEST(Kes_PropertyBag, arrayFromJson)
         doc.ParseInsitu(json);
         ASSERT_FALSE(doc.HasParseError());
         
-        auto a = Kes::arrayFromJson("IntArray", doc, Logger::instance());
+        auto a = Kes::arrayFromJson("IntArray", doc, &g_errorHandler);
         EXPECT_EQ(a.size(), 5);
         
         EXPECT_TRUE(a[0]->isProperty());
@@ -165,7 +177,7 @@ TEST(Kes_PropertyBag, tableFromJson)
         doc.ParseInsitu(json);
         ASSERT_FALSE(doc.HasParseError());
         
-        auto t = Kes::tableFromJson("", doc, Logger::instance());
+        auto t = Kes::tableFromJson("", doc, &g_errorHandler);
         EXPECT_EQ(t.size(), 6);
 
         auto it = t.find("BoolProperty");
@@ -227,7 +239,7 @@ TEST(Kes_PropertyBag, propertyBagFromJson)
         doc.ParseInsitu(json);
         ASSERT_FALSE(doc.HasParseError());
 
-        auto b = Kes::propertyBagFromJson("", doc, Logger::instance());
+        auto b = Kes::propertyBagFromJson("", doc, &g_errorHandler);
         ASSERT_TRUE(b.isTable());
         auto& root = b.table();
         EXPECT_EQ(root.size(), 4);

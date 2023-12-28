@@ -10,7 +10,7 @@ namespace ExceptionProps
 namespace Private
 {
 
-KESRV_EXPORT void registerAll()
+void registerAll()
 {
     registerProperty(new PropertyInfoWrapper<DecodedError>);
     registerProperty(new PropertyInfoWrapper<PosixErrorCode>);

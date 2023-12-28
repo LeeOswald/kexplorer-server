@@ -28,7 +28,6 @@ add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/propertybag.hxx
     ../../include/kesrv/sourcelocation.hxx
     ../../include/kesrv/stringliteral.hxx
-    ../../include/kesrv/time.hxx
     ../../include/kesrv/util/autoptr.hxx
     ../../include/kesrv/util/continuousbuffer.hxx
     ../../include/kesrv/util/crc32.hxx
@@ -42,7 +41,6 @@ add_library(${KES_SRVLIB} SHARED
     init.cxx
     knownprops.cxx
     propertybag.cxx
-    time.cxx
     util/exceptionutil.cxx
     util/format.cxx
     util/netutil.cxx

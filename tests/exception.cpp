@@ -110,7 +110,7 @@ TEST(Kes_Exception, format2)
             catch (std::exception& e)
             {
                 std::throw_with_nested(
-                    Kes::Exception(KES_HERE(), "POSIX exception", Kes::ExceptionProps::PosixErrorCode(ENOENT), Kes::ExceptionProps::DecodedError("ENOENT"))
+                    Kes::Exception(KES_HERE(), "POSIX exception", Kes::ExceptionProps::PosixErrorCode(ENOENT), Kes::ExceptionProps::DecodedError("No such file"))
                 );
             }
         }
