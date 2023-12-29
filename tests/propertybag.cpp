@@ -162,3 +162,125 @@ TEST(Kes_PropertyBag, propertyBagFromJson)
         }
     }
 }
+
+TEST(Kes_PropertyBag, propertyBagToJson)
+{
+    registerProps();
+
+    char json[] =
+    "{" \
+        "\"IntArray\":[1,2,3]," \
+        "\"Table1\":{\"BoolProperty\":true,\"IntProperty\":13}," \
+        "\"Int64Property\":-67," \
+        "\"Table2\":{" \
+            "\"Table21\":{\"StringProperty\":\"some text\",\"BoolProperty\":false}," \
+            "\"IntArray\":[0,9,8,7]," \
+            "\"IntProperty\":-5" \
+        "}" \
+    "}";
+
+    auto b = Kes::propertyBagFromJson(json, &g_errorHandler);
+
+    auto out = Kes::propertyBagToJson(b);
+
+    std::cout << out << "\n";
+
+    b = Kes::propertyBagFromJson(const_cast<char*>(out.data()), &g_errorHandler);
+    ASSERT_TRUE(b.isTable());
+    auto& root = b.table();
+    EXPECT_EQ(root.size(), 4);
+
+    {
+        auto it = root.find("IntArray");
+        ASSERT_NE(it, root.end());
+        ASSERT_TRUE(it->second->isArray());
+        auto& intArray = it->second->array();
+        EXPECT_EQ(intArray.size(), 3);
+
+        {
+            ASSERT_TRUE(intArray[0]->isProperty());
+            EXPECT_EQ(std::any_cast<int>(intArray[0]->property().value), 1);
+            ASSERT_TRUE(intArray[1]->isProperty());
+            EXPECT_EQ(std::any_cast<int>(intArray[1]->property().value), 2);
+            ASSERT_TRUE(intArray[2]->isProperty());
+            EXPECT_EQ(std::any_cast<int>(intArray[2]->property().value), 3);
+        }
+    }
+
+    {
+        auto it = root.find("Table1");
+        ASSERT_NE(it, root.end());
+        ASSERT_TRUE(it->second->isTable());
+        auto& table1 = it->second->table();
+        EXPECT_EQ(table1.size(), 2);
+
+        {
+            auto it2 = table1.find("BoolProperty");
+            ASSERT_NE(it2, table1.end());
+            ASSERT_TRUE(it2->second->isProperty());
+            EXPECT_EQ(std::any_cast<bool>(it2->second->property().value), true);
+            it2 = table1.find("IntProperty");
+            ASSERT_NE(it2, table1.end());
+            ASSERT_TRUE(it2->second->isProperty());
+            EXPECT_EQ(std::any_cast<int>(it2->second->property().value), 13);
+        }
+    }
+
+    {
+        auto it = root.find("Int64Property");
+        ASSERT_NE(it, root.end());
+        ASSERT_TRUE(it->second->isProperty());
+        EXPECT_EQ(std::any_cast<int64_t>(it->second->property().value), -67);
+    }
+
+    {
+        auto it = root.find("Table2");
+        ASSERT_NE(it, root.end());
+        ASSERT_TRUE(it->second->isTable());
+        auto& table2 = it->second->table();
+        EXPECT_EQ(table2.size(), 3);
+
+        {
+            auto it2 = table2.find("Table21");
+            ASSERT_NE(it2, table2.end());
+            ASSERT_TRUE(it2->second->isTable());
+            auto& table21 = it2->second->table();
+            EXPECT_EQ(table21.size(), 2);
+
+            {
+                auto it3 = table21.find("StringProperty");
+                ASSERT_NE(it3, table21.end());
+                ASSERT_TRUE(it3->second->isProperty());
+                EXPECT_STREQ(std::any_cast<std::string>(it3->second->property().value).c_str(), "some text");
+
+                it3 = table21.find("BoolProperty");
+                ASSERT_NE(it3, table21.end());
+                ASSERT_TRUE(it3->second->isProperty());
+                EXPECT_EQ(std::any_cast<bool>(it3->second->property().value), false);
+            }
+
+            it2 = table2.find("IntArray");
+            ASSERT_NE(it2, table2.end());
+            ASSERT_TRUE(it2->second->isArray());
+            auto& array = it2->second->array();
+            EXPECT_EQ(array.size(), 4);
+
+            {
+                ASSERT_TRUE(array[0]->isProperty());
+                EXPECT_EQ(std::any_cast<int>(array[0]->property().value), 0);
+                ASSERT_TRUE(array[1]->isProperty());
+                EXPECT_EQ(std::any_cast<int>(array[1]->property().value), 9);
+                ASSERT_TRUE(array[2]->isProperty());
+                EXPECT_EQ(std::any_cast<int>(array[2]->property().value), 8);
+                ASSERT_TRUE(array[3]->isProperty());
+                EXPECT_EQ(std::any_cast<int>(array[3]->property().value), 7);
+            }
+
+            it2 = table2.find("IntProperty");
+            ASSERT_NE(it2, table2.end());
+            ASSERT_TRUE(it2->second->isProperty());
+            EXPECT_EQ(std::any_cast<int>(it2->second->property().value), -5);
+
+        }
+    }
+}

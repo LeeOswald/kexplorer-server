@@ -293,4 +293,117 @@ KESRV_EXPORT PropertyBag propertyBagFromJson(char* json, IPropertyErrorHandler* 
     return propertyBagFromJsonValue("", doc, eh);
 }
 
+
+static void propertyBagToJson(const PropertyBag& bag, Json::Writer<Json::StringBuffer>& writer);
+
+static void propertyToJson(const PropertyBag& bag, Json::Writer<Json::StringBuffer>& writer)
+{
+    assert(!bag.isEmpty());
+    assert(!bag.isArray());
+    assert(!bag.isTable());
+    assert(bag.isProperty());
+
+    auto& prop = bag.property();
+    assert(prop.value.has_value());
+    if (!prop.value.has_value())
+        throw Exception(KES_HERE(), Util::format("Property %08x has no value", prop.id));
+
+    const std::type_info* type = nullptr;
+
+    auto info = prop.info;
+    if (!info)
+        info = Kes::lookupProperty(prop.id);
+
+    if (info)
+        type = &info->type();
+    else
+        type = &prop.value.type();
+
+    if (*type == typeid(bool))
+    {
+        writer.Bool(std::any_cast<bool>(prop.value));
+    }
+    else if (*type == typeid(int))
+    {
+        writer.Int(std::any_cast<int>(prop.value));
+    }
+    else if (*type == typeid(unsigned int))
+    {
+        writer.Uint(std::any_cast<unsigned int>(prop.value));
+    }
+    else if (*type == typeid(int64_t))
+    {
+        writer.Int64(std::any_cast<int64_t>(prop.value));
+    }
+    else if (*type == typeid(uint64_t))
+    {
+        writer.Uint64(std::any_cast<uint64_t>(prop.value));
+    }
+    else if (*type == typeid(std::string))
+    {
+        auto s = std::any_cast<std::string>(prop.value);
+        writer.String(s.data(), s.length());
+    }
+}
+
+static void tableToJson(const PropertyBag& bag, Json::Writer<Json::StringBuffer>& writer)
+{
+    assert(bag.isTable());
+    auto& t = bag.table();
+
+    writer.StartObject();
+
+    for (auto& prop: t)
+    {
+        if (!prop.second->isEmpty())
+        {
+            assert(prop.first == prop.second->name());
+            propertyBagToJson(*prop.second, writer);
+        }
+    }
+
+    writer.EndObject();
+}
+
+static void arrayToJson(const PropertyBag& bag, Json::Writer<Json::StringBuffer>& writer)
+{
+    assert(bag.isArray());
+    auto& a = bag.array();
+
+    writer.StartArray();
+
+    for (auto& prop: a)
+    {
+        if (!prop->isEmpty())
+        {
+            propertyBagToJson(*prop, writer);
+        }
+    }
+
+    writer.EndArray();
+}
+
+static void propertyBagToJson(const PropertyBag& bag, Json::Writer<Json::StringBuffer>& writer)
+{
+    if (!bag.name().empty())
+        writer.Key(bag.name().data(), bag.name().length());
+
+    if (bag.isArray())
+        arrayToJson(bag, writer);
+    else if (bag.isTable())
+        tableToJson(bag, writer);
+    else
+        propertyToJson(bag, writer);
+}
+
+KESRV_EXPORT std::string propertyBagToJson(const PropertyBag& bag)
+{
+    Json::StringBuffer sb;
+    Json::Writer<Json::StringBuffer> writer(sb);
+
+    propertyBagToJson(bag, writer);
+
+    return std::string(sb.GetString());
+}
+
 } // namespace Kes {}

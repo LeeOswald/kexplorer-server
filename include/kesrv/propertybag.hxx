@@ -124,6 +124,7 @@ protected:
 // NOTE: this will trash the input buffer
 KESRV_EXPORT PropertyBag propertyBagFromJson(char* json, IPropertyErrorHandler* eh);
 
+KESRV_EXPORT std::string propertyBagToJson(const PropertyBag& bag);
 
 
 } // namespace Kes {}
