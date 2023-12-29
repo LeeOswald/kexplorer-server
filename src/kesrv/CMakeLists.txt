@@ -5,7 +5,6 @@ if(KES_LINUX EQUAL 1)
         ../../include/kesrv/processmanager/procfs.hxx
         ../../include/kesrv/requestprocessor.hxx
         ../../include/kesrv/util/posixerror.hxx
-        callstack_posix.cxx
         processmgr/processmanager.cxx
         processmgr/processprops.cxx
         processmgr/procfs.cxx
@@ -14,7 +13,6 @@ if(KES_LINUX EQUAL 1)
 endif()
 
 add_library(${KES_SRVLIB} SHARED
-    ../../include/kesrv/callstack.hxx
     ../../include/kesrv/condition.hxx
     ../../include/kesrv/empty.hxx
     ../../include/kesrv/exception.hxx
