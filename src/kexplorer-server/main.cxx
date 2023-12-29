@@ -1,6 +1,7 @@
 #include <kesrv/condition.hxx>
 #include <kesrv/knownprops.hxx>
 #include <kesrv/processmanager/processmanager.hxx>
+#include <kesrv/util/exceptionutil.hxx>
 
 #include "globalcmdhandler.hxx"
 #include "iorunner.hxx"
@@ -19,6 +20,8 @@
 
 namespace
 {
+
+Kes::Log::ILog* g_log = nullptr;
 
 
 void daemonize() noexcept
@@ -69,6 +72,13 @@ void daemonize() noexcept
     ::umask(0);
 }
 
+void terminateHandler()
+{
+    LogFatal(g_log, "std::terminate() called");
+
+    std::abort();
+}
+
 } // namespace {}
 
 
@@ -82,40 +92,45 @@ int main(int argc, char* argv[])
     }
 #endif
 
-    try
+
+    namespace po = boost::program_options;
+    po::options_description options("Command line options");
+    options.add_options()
+        ("help,h", "display this message")
+        ("verbose,v", "display debug output")
+        ("daemon,d", "run as a daemon")
+        ("address,a", po::value<std::string>(), "server bind address:port")
+    ;
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, options), vm);
+    po::notify(vm);
+
+    if (vm.count("help"))
     {
-        namespace po = boost::program_options;
-        po::options_description options("Command line options");
-        options.add_options()
-            ("help,h", "display this message")
-            ("verbose,v", "display debug output")
-            ("daemon,d", "run as a daemon")
-            ("address,a", po::value<std::string>(), "server bind address:port")
-        ;
+        std::cerr << options << "\n";
+        return EXIT_SUCCESS;
+    }
 
-        po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, options), vm);
-        po::notify(vm);
+    if (vm.count("daemon"))
+        daemonize();
 
-        if (vm.count("help"))
-        {
-            std::cerr << options << "\n";
-            return EXIT_SUCCESS;
-        }
+    Kes::initialize();
 
-        Kes::initialize();
-
-        Kes::Log::Level logLevel = vm.count("verbose") ? Kes::Log::Level::Debug : Kes::Log::Level::Info;
+    Kes::Log::Level logLevel = vm.count("verbose") ? Kes::Log::Level::Debug : Kes::Log::Level::Info;
 
 #if !KES_DEBUG
-        Kes::Private::Logger logger(logLevel, "/var/log/kexplorer-server.log");
+    Kes::Private::Logger logger(logLevel, "/var/log/kexplorer-server.log");
 #else
-        Kes::Private::Logger logger(logLevel, "kexplorer-server.log");
+    Kes::Private::Logger logger(logLevel, "kexplorer-server.log");
 #endif
 
-        if (vm.count("daemon"))
-            daemonize();
+    g_log = &logger;
 
+    std::set_terminate(terminateHandler);
+
+    try
+    {
         std::string bindAddr("127.0.0.1:6665");
         if (vm.count("address"))
         {
@@ -171,10 +186,17 @@ int main(int argc, char* argv[])
         io.stop();
 
         Kes::finalize();
+
+        g_log = nullptr;
+    }
+    catch (Kes::Exception& e)
+    {
+        Kes::Util::logException(g_log, Kes::Log::Level::Fatal, e);
+        return EXIT_FAILURE;
     }
     catch (std::exception& e)
     {
-        std::cerr << "Unexpected error: " << e.what() << "\n";
+        Kes::Util::logException(g_log, Kes::Log::Level::Fatal, e);
         return EXIT_FAILURE;
     }
 
