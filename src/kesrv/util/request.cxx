@@ -1,3 +1,4 @@
+#include <kesrv/json.hxx>
 #include <kesrv/knownprops.hxx>
 #include <kesrv/util/request.hxx>
 
@@ -48,7 +49,7 @@ KESRV_EXPORT std::string fail(const char* reason)
     
     writer.StartObject();
     writer.Key(Props::Status::idstr());
-    writer.String("fail");
+    writer.String(Fail);
     writer.Key(Props::Reason::idstr());
     writer.String(reason);
 
@@ -62,6 +63,7 @@ void registerAll()
 {
     Kes::registerProperty(new PropertyInfoWrapper<Props::Status>);
     Kes::registerProperty(new PropertyInfoWrapper<Props::Reason>);
+    Kes::registerProperty(new PropertyInfoWrapper<Props::Version>);
 }
 
 } // namespace Private {}

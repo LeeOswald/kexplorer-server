@@ -19,7 +19,7 @@ static void handleError(SourceLocation where, IPropertyErrorHandler* eh, const c
     va_end(args);
 
     auto action = eh->handle(where, message);
-    if (action == IPropertyErrorHandler::Result::Throw)
+    if (action == CallbackResult::Abort)
         throw Exception(where, std::move(message));
 }
 

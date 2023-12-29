@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kesrv/property.hxx>
+#include <kesrv/propertybag.hxx>
 
 namespace Kes
 {
@@ -15,6 +15,11 @@ void registerAll();
 
 } // namespace Private {}
 
+
+using Process = PropertyInfo<PropertyBag::Table, KES_PROPID("process.process"), "Process Info", NullPropertyFormatter>;
+using DeletedProcess = PropertyInfo<int, KES_PROPID("process.deleted_process"), "Deleted Process", NullPropertyFormatter>;
+using ProcessList = PropertyInfo<PropertyBag::Array, KES_PROPID("process.process_list"), "Process List", NullPropertyFormatter, Process>;
+using DeletedProcessList = PropertyInfo<PropertyBag::Array, KES_PROPID("process.deleted_process_list"), "Deleted Process List", NullPropertyFormatter, int>;
 
 using Error = PropertyInfo<std::string, KES_PROPID("process.error"), "__Error", PropertyFormatter<std::string>>;
 using Newcomer = PropertyInfo<bool, KES_PROPID("process.newcomer"), "__New", PropertyFormatter<bool>>;

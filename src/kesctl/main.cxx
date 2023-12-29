@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
         po::store(po::parse_command_line(argc, argv, options), vm);
         po::notify(vm);
 
-        if (vm.count("help"))
+        if (vm.count("help") || !vm.count("command"))
         {
             std::cerr << options << "\n";
             return EXIT_SUCCESS;
@@ -64,11 +64,8 @@ int main(int argc, char* argv[])
         );
 
 
-        if (vm.count("command") > 0)
-        {
-            auto cmd = vm["command"].as<std::string>();
-            client.command(Kes::Util::Request::simple(cmd.c_str()));
-        }
+        auto cmd = vm["command"].as<std::string>();
+        client.command(Kes::Util::Request::simple(cmd.c_str()));
 
         io.run();
 

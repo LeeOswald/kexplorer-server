@@ -40,7 +40,7 @@ public:
     SessionHandler& operator=(SessionHandler&&) = delete;
 
     void close() noexcept;
-    std::pair<bool, std::string> process(const char* data, size_t size) noexcept;
+    std::pair<CallbackResult, std::string> process(const char* data, size_t size) noexcept;
     const std::string& peer() const noexcept { return m_peerAddr; }
 
 private:

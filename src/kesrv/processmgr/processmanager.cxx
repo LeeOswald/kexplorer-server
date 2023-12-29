@@ -1,5 +1,6 @@
 #include <kesrv/processmanager/processmanager.hxx>
 #include <kesrv/processmanager/processprops.hxx>
+#include <kesrv/util/request.hxx>
 
 namespace Kes
 {
@@ -37,8 +38,11 @@ ProcessManager::ProcessManager(IRequestProcessor* rp, Log::ILog* log)
     }
 }
 
-bool ProcessManager::process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response)
+bool ProcessManager::process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response)
 {
+    assert(request.isTable());
+    assert(response.isTable());
+
     std::lock_guard l(m_mutex);
 
     auto it = m_sessions.find(sessionId);
@@ -57,8 +61,14 @@ void ProcessManager::startSession(uint32_t id)
 {
     std::lock_guard l(m_mutex);
 
-    [[maybe_unused]] auto ret = m_sessions.insert({ id, std::make_unique<Session>(id) });
-    assert(ret.second);
+    auto it = m_sessions.find(id);
+    if (it != m_sessions.end())
+    {
+        LogDebug(m_log, "Session %d already exists", id);
+        return;
+    }
+
+    m_sessions.insert({ id, std::make_unique<Session>(id) });
 }
 
 void ProcessManager::endSession(uint32_t id)
@@ -66,14 +76,13 @@ void ProcessManager::endSession(uint32_t id)
     std::lock_guard l(m_mutex);
 
     auto it = m_sessions.find(id);
-    assert(it != m_sessions.end());
     if (it != m_sessions.end())
     {
         m_sessions.erase(it);
     }
 }
 
-bool ProcessManager::process(Session* session, const char* key, const Json::Document& request, Json::Document& response)
+bool ProcessManager::process(Session* session, const char* key, const PropertyBag& request, PropertyBag& response)
 {
     if (!std::strcmp(key, "list_processes"))
         return listProcesses(true, session, request, response);
@@ -83,39 +92,37 @@ bool ProcessManager::process(Session* session, const char* key, const Json::Docu
     return false;
 }
 
-bool ProcessManager::listProcesses(bool initial, Session* session, const Json::Document& request, Json::Document& response)
+bool ProcessManager::listProcesses(bool initial, Session* session, const PropertyBag& request, PropertyBag& response)
 {
     readProcesses(initial, session);
 
-    auto& a = response.GetAllocator();
-
     // list existing/new processes
     {
-        Json::Value jProcessArray(Json::kArrayType);
+        PropertyBag processArray{Kes::ProcessProps::ProcessList::idstr(), PropertyBag::Array()};
         
         for (auto& process: session->processes)
         {
-            auto jProcess = process.second->serialize(response);
-            jProcessArray.PushBack(std::move(jProcess), a);
+            auto jProcess = process.second->serialize();
+            Util::addToArray<Kes::ProcessProps::Process>(processArray, std::move(jProcess));
         }
 
-        response.AddMember("process_list", std::move(jProcessArray), a);
+        Util::addToTable<Kes::ProcessProps::ProcessList>(response, std::move(processArray));
     }
     
     // list deleted processes
     if (!initial)
     {
-        Json::Value jRemovedProcessArray(Json::kArrayType);
-
+        PropertyBag processArray{Kes::ProcessProps::ProcessList::idstr(), PropertyBag::Array()};
+        
         for (auto pid: session->removedPids)
         {
-            jRemovedProcessArray.PushBack(Json::Value(pid), a);
+            Util::addToArray<Kes::ProcessProps::DeletedProcess>(processArray, int(pid));
         }
 
-        response.AddMember("removed_process_list", std::move(jRemovedProcessArray), a);
+        Util::addToTable<Kes::ProcessProps::DeletedProcessList>(response, std::move(processArray));
     }
 
-    response.AddMember("status", Json::Value("success", a), a);
+    Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
     return true;
 }
 
@@ -182,43 +189,41 @@ ProcessManager::ProcessInfo::Ptr ProcessManager::readProcess(pid_t pid, uint32_t
     return process;
 }
 
-Json::Value ProcessManager::ProcessInfo::serialize(Json::Document& doc)
+PropertyBag ProcessManager::ProcessInfo::serialize() const
 {
-    auto& a = doc.GetAllocator();
+    PropertyBag table{std::string(), PropertyBag::Table()};
 
-    Json::Value j(rapidjson::kObjectType);
-
-    j.AddMember(Json::GenericStringRef(ProcessProps::Pid::idstr()), Json::Value(stat.pid), a);
+    Util::addToTable<ProcessProps::Pid>(table, int(stat.pid));
 
     if (newcomer)
     {
-        j.AddMember(Json::GenericStringRef(ProcessProps::Newcomer::idstr()), Json::Value(true), a);
+        Util::addToTable<ProcessProps::Newcomer>(table, true);
     }
     
     if (!stat.valid)
     {
-        j.AddMember(Json::GenericStringRef(ProcessProps::Error::idstr()), Json::Value(stat.error.c_str(), a), a);
+        Util::addToTable<ProcessProps::Error>(table, stat.error);
     }
     else
     {    
-        j.AddMember(Json::GenericStringRef(ProcessProps::PPid::idstr()), Json::Value(stat.ppid), a);
-        j.AddMember(Json::GenericStringRef(ProcessProps::PGrp::idstr()), Json::Value(stat.pgrp), a);
-        j.AddMember(Json::GenericStringRef(ProcessProps::Tpgid::idstr()), Json::Value(stat.tpgid), a);
-        j.AddMember(Json::GenericStringRef(ProcessProps::Session::idstr()), Json::Value(stat.session), a);
-        j.AddMember(Json::GenericStringRef(ProcessProps::Comm::idstr()), Json::Value(stat.comm.c_str(), a), a);
-        j.AddMember(Json::GenericStringRef(ProcessProps::Ruid::idstr()), Json::Value(stat.ruid), a);
+        Util::addToTable<ProcessProps::PPid>(table, int(stat.ppid));
+        Util::addToTable<ProcessProps::PGrp>(table, int(stat.pgrp));
+        Util::addToTable<ProcessProps::Tpgid>(table, int(stat.tpgid));
+        Util::addToTable<ProcessProps::Session>(table, int(stat.session));
+        Util::addToTable<ProcessProps::Comm>(table, comm);
+        Util::addToTable<ProcessProps::Ruid>(table, int(stat.ruid));
 
         if (!comm.empty())
-            j.AddMember(Json::GenericStringRef(ProcessProps::StatComm::idstr()), Json::Value(comm.c_str(), a), a);
+            Util::addToTable<ProcessProps::StatComm>(table, comm);
 
         if (!exe.empty())
-            j.AddMember(Json::GenericStringRef(ProcessProps::Exe::idstr()), Json::Value(exe.c_str(), a), a);
+            Util::addToTable<ProcessProps::Exe>(table, exe);
 
         if (!cmdLine.empty())
-            j.AddMember(Json::GenericStringRef(ProcessProps::CmdLine::idstr()), Json::Value(cmdLine.c_str(), a), a);
+            Util::addToTable<ProcessProps::CmdLine>(table, cmdLine);
     }
 
-    return j;
+    return table;
 }
 
 } // namespace Private {}    

@@ -228,7 +228,7 @@ private:
         {
             if (ec)
             {
-                m_log->write(Kes::Log::Level::Error, "TcpServer: read() failed: %s", ec.message().c_str());
+                m_log->write(Kes::Log::Level::Warning, "TcpServer: read() failed: %s", ec.message().c_str());
 
                 close();
                 m_owner->removeSession(m_id);
@@ -246,7 +246,7 @@ private:
 
                 // this MUST be noexcept
                 auto result = m_sessionHandler->process(buffer->data(buffer->r_index()), transferred);
-                if (!result.first)
+                if (result.first == CallbackResult::Abort)
                 {
                     // abort connection
                     close();

@@ -27,7 +27,7 @@ public:
     ProcessManager(ProcessManager&&) = delete;
     ProcessManager& operator=(ProcessManager&&) = delete;
     
-    bool process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response) override;
+    bool process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response) override;
     void startSession(uint32_t id) override;
     void endSession(uint32_t id) override;
 
@@ -44,7 +44,7 @@ private:
         ProcessInfo(const ProcessInfo&) = delete;
         ProcessInfo& operator=(const ProcessInfo&) = delete;
 
-        Json::Value serialize(Json::Document& doc);
+        PropertyBag serialize() const;
 
         uint32_t timestamp;
         bool newcomer = false;
@@ -71,8 +71,8 @@ private:
         std::vector<pid_t> removedPids;
     };
 
-    bool process(Session* session, const char* key, const Json::Document& request, Json::Document& response);
-    bool listProcesses(bool initial, Session* session, const Json::Document& request, Json::Document& response);
+    bool process(Session* session, const char* key, const PropertyBag& request, PropertyBag& response);
+    bool listProcesses(bool initial, Session* session, const PropertyBag& request, PropertyBag& response);
     ProcessInfo::Ptr readProcess(pid_t pid, uint32_t timestamp);
     void readProcesses(bool initial, Session* session);
 

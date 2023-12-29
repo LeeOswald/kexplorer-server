@@ -13,6 +13,11 @@ namespace Private
 
 KESRV_EXPORT void registerAll()
 {
+    registerProperty(new PropertyInfoWrapper<ProcessProps::Process>);
+    registerProperty(new PropertyInfoWrapper<ProcessProps::DeletedProcess>);
+    registerProperty(new PropertyInfoWrapper<ProcessProps::ProcessList>);
+    registerProperty(new PropertyInfoWrapper<ProcessProps::DeletedProcessList>);
+
     registerProperty(new PropertyInfoWrapper<ProcessProps::Error>);
     registerProperty(new PropertyInfoWrapper<ProcessProps::Pid>);
     registerProperty(new PropertyInfoWrapper<ProcessProps::PPid>);

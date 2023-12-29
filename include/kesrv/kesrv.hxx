@@ -20,4 +20,11 @@ namespace Kes
 KESRV_EXPORT void initialize();
 KESRV_EXPORT void finalize();
 
+
+enum class CallbackResult
+{
+    Continue,
+    Abort
+};
+
 } // namespace Kes {}

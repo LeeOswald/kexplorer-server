@@ -10,33 +10,72 @@ namespace Kes
 namespace Private
 {
 
-std::string RequestProcessor::process(uint32_t sessionId, const char* request, size_t length)
+class JsonErrorHandler :
+    public Kes::IPropertyErrorHandler
+{
+public:
+    explicit JsonErrorHandler(Log::ILog* log) noexcept
+        : m_log(log)
+    {}
+
+    Kes::CallbackResult handle(Kes::SourceLocation where, const std::string& message) noexcept override
+    {
+        m_errors = true;
+        m_message = message;
+
+        m_log->write(Kes::Log::Level::Warning, "%s", message.c_str());
+        return Kes::CallbackResult::Continue;
+    }
+
+    [[nodiscard]] bool error() const noexcept
+    {
+        return m_errors;
+    }
+
+    [[nodiscard]] const std::string& message() const noexcept
+    {
+        return m_message;
+    }
+
+private:
+    Log::ILog* m_log;
+    bool m_errors = false;
+    std::string m_message;
+};
+
+
+std::string RequestProcessor::process(uint32_t sessionId, char* request, [[maybe_unused]] size_t length)
 {
     try
     {
         LogDebug(m_log, "\n-> %s\n", request);
 
-        Kes::Json::Document docRequest;
-        docRequest.Parse(request, length);
-
-        if (!docRequest.IsObject())
+        JsonErrorHandler eh(m_log);
+        auto parsedRequest = propertyBagFromJson(request, &eh);
+        
+        if (!parsedRequest.isTable())
         {
             m_log->write(Log::Level::Error, "RequestProcessor: request is not a JSON object");
             return Util::Response::fail("Not a JSON object");
         }
 
-        auto requestKey = docRequest.FindMember(Kes::Util::Request::Props::Command::idstr());
-        if (requestKey != docRequest.MemberEnd())
+        auto requestKeyIt = parsedRequest.table().find(Kes::Util::Request::Props::Command::idstr());
+        if (requestKeyIt == parsedRequest.table().end())
         {
-            auto key = requestKey->value.GetString();
-            if (!key)
-            {
-                m_log->write(Log::Level::Error, "RequestProcessor: invalid request");
-                return Util::Response::fail("Invalid request");
-            }
+            m_log->write(Log::Level::Error, "RequestProcessor: \'request\' key not found");
+            return Util::Response::fail("Unsupported request");
+        }
 
-            Kes::Json::Document docResponse;
-            docResponse.SetObject();
+        if (!requestKeyIt->second->isProperty())
+        {
+            m_log->write(Log::Level::Error, "RequestProcessor: ill-formed reuest");
+            return Util::Response::fail("Ill-formed request");
+        }
+
+        auto key = std::any_cast<std::string>(requestKeyIt->second->property().value);
+
+        {
+            PropertyBag response{std::string(), PropertyBag::Table()};
 
             bool handlerFound = false;
             {
@@ -46,7 +85,7 @@ std::string RequestProcessor::process(uint32_t sessionId, const char* request, s
                 for (auto it = range.first; it != range.second; ++it)
                 {
                     auto handler = it->second;
-                    handlerFound = handler->process(sessionId, key, docRequest, docResponse);
+                    handlerFound = handler->process(sessionId, key.c_str(), parsedRequest, response);
                 }
             }
 
@@ -56,14 +95,11 @@ std::string RequestProcessor::process(uint32_t sessionId, const char* request, s
                 return Util::Response::fail("Unsupported request");
             }
 
-            Json::StringBuffer sb;
-            Json::Writer<Json::StringBuffer> writer(sb);
-            docResponse.Accept(writer);
-            auto out = sb.GetString();
+            auto out = propertyBagToJson(response);
 
-            LogDebug(m_log, "\n<- %s\n", out);
+            LogDebug(m_log, "\n<- %s\n", out.c_str());
 
-            return std::string(out);
+            return out;
         }
     }
     catch (std::exception& e)

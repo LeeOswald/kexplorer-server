@@ -29,7 +29,7 @@ void SessionHandler::close() noexcept
 
 }
 
-std::pair<bool, std::string> SessionHandler::process(const char* data, size_t size) noexcept
+std::pair<CallbackResult, std::string> SessionHandler::process(const char* data, size_t size) noexcept
 {
     std::string response;
 
@@ -45,7 +45,7 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
         if (posCur == posPrev)
         {
             // nothing to process
-            return std::make_pair(true, response);
+            return std::make_pair(CallbackResult::Continue, response);
         }
 
         auto cur = m_buffer.data() + posPrev;
@@ -75,7 +75,7 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
             if (m_jsonDepthMax == 0)
             {
                 // nothing to process
-                return std::make_pair(true, response);
+                return std::make_pair(CallbackResult::Continue, response);
             }
 
             m_buffer.push("", 1); // append '\0'
@@ -92,10 +92,10 @@ std::pair<bool, std::string> SessionHandler::process(const char* data, size_t si
         m_buffer.reset();
         m_jsonDepth = 0;
         m_jsonDepthMax = 0;
-        return std::make_pair(false, response); // server should reset the connection in this case
+        return std::make_pair(CallbackResult::Abort, response); // server should reset the connection in this case
     }
 
-    return std::make_pair(true, response);
+    return std::make_pair(CallbackResult::Continue, response);
 }
 
 

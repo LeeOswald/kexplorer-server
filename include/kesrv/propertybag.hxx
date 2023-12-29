@@ -108,13 +108,7 @@ private:
 
 struct IPropertyErrorHandler
 {
-    enum class Result
-    {
-        Continue,
-        Throw
-    };
-
-    virtual Result handle(SourceLocation where, const std::string& message) noexcept = 0;
+    virtual CallbackResult handle(SourceLocation where, const std::string& message) noexcept = 0;
 
 protected:
     virtual ~IPropertyErrorHandler() {}

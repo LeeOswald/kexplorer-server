@@ -35,10 +35,10 @@ void registerProps()
 struct ErrorHandler :
     public Kes::IPropertyErrorHandler
 {
-    Result handle(Kes::SourceLocation where, const std::string& message) noexcept override
+    Kes::CallbackResult handle(Kes::SourceLocation where, const std::string& message) noexcept override
     {
         Logger::instance()->write(Kes::Log::Level::Warning, "%s", message.c_str());
-        return Result::Continue;
+        return Kes::CallbackResult::Continue;
     }
 };
 

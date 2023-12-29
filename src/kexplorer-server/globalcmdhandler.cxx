@@ -42,16 +42,17 @@ GlobalCmdHandler::GlobalCmdHandler(IRequestProcessor* rp, Condition& exitConditi
     }
 }
 
-bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::Document& request, Json::Document& response)
+bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response)
 {
-    auto& a = response.GetAllocator();
+    assert(request.isTable());
+    assert(response.isTable());
 
     if (!std::strcmp(key, "stop"))
     {
         m_log->write(Log::Level::Info, "GlobalCmdHandler: [stop] command received");
 
-        response.AddMember(Json::GenericStringRef(Kes::Util::Response::Props::Status::idstr()), Json::Value("success", a), a);
-
+        Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
+                
         m_exitCondition.set();
 
         return true;
@@ -62,11 +63,11 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Json::
         m_log->write(Log::Level::Info, "GlobalCmdHandler: [version] command received");
         std::ostringstream ss;
         ss << KES_APPLICATION_NAME << " " << KES_VERSION_STR << " " << KES_COPYRIGHT;
-
-        response.AddMember(Json::GenericStringRef(Kes::Util::Response::Props::Status::idstr()), Json::Value("success", a), a);
         auto v = ss.str();
-        response.AddMember("version", Json::Value(v.c_str(), v.length(), a), a);
 
+        Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
+        Util::addToTable<Kes::Util::Response::Props::Version>(response, std::move(v));
+        
         return true;
     }
 

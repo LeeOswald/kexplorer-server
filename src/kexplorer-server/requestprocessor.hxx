@@ -33,7 +33,7 @@ public:
     RequestProcessor(RequestProcessor&&) = delete;
     RequestProcessor& operator=(RequestProcessor&&) = delete;
 
-    std::string process(uint32_t sessionId, const char* request, size_t length) override;
+    std::string process(uint32_t sessionId, char* request, size_t length) override;
     void registerHandler(const char* key, IRequestHandler* handler) override;
     void unregisterHandler(const char* key, IRequestHandler* handler) override;
     void startSession(uint32_t id) override;
