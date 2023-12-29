@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kesrv/log.hxx>
-#include <kesrv/time.hxx>
 
 #include <vector>
 
@@ -73,7 +72,7 @@ struct KESRV_EXPORT Stat
     /*50*/ unsigned long env_end = 0;
     /*51*/ int exit_code = 0;
 
-    Time startTime;                                // process start time
+    uint64_t startTime;                                // process start time
     uid_t ruid = uid_t(-1);                              // real user ID of process owner
 
     Stat() = default;
@@ -98,7 +97,7 @@ public:
 
 private:
     uint64_t getBootTimeImpl() noexcept;
-    Time fromRelativeTime(uint64_t relative) noexcept;
+    uint64_t fromRelativeTime(uint64_t relative) noexcept;
 
     Log::ILog* m_log;
 };

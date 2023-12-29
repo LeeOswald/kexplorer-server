@@ -490,7 +490,7 @@ uint64_t ProcFs::getBootTime() noexcept
     return bootTime;
 }
 
-Time ProcFs::fromRelativeTime(uint64_t relative) noexcept
+uint64_t ProcFs::fromRelativeTime(uint64_t relative) noexcept
 {
     static long clockRes = ::sysconf(_SC_CLK_TCK);
     assert(clockRes > 0);
@@ -498,19 +498,7 @@ Time ProcFs::fromRelativeTime(uint64_t relative) noexcept
     auto bootTime = getBootTime();
     auto time = relative / clockRes;
 
-    struct tm expanded = {};
-    time_t seconds = bootTime + time;
-    ::localtime_r(&seconds, &expanded);
-
-    return Time(
-        expanded.tm_year + 1900,
-        Time::Month(expanded.tm_mon),
-        expanded.tm_mday,
-        expanded.tm_hour,
-        expanded.tm_min,
-        expanded.tm_sec,
-        0
-    );
+    return bootTime + time;
 }
 
 } // namespace ProcFs {}

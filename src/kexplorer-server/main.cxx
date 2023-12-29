@@ -11,6 +11,7 @@
 #include "tcpserver.hxx"
 
 #include <iostream>
+#include <sstream>
 
 #include <boost/program_options.hpp>
 
@@ -74,7 +75,10 @@ void daemonize() noexcept
 
 void terminateHandler()
 {
-    LogFatal(g_log, "std::terminate() called");
+    std::ostringstream ss;
+    ss << boost::stacktrace::stacktrace();
+
+    LogFatal(g_log, "std::terminate() called from\n%s", ss.str().c_str());
 
     std::abort();
 }
