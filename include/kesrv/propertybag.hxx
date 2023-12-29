@@ -1,7 +1,6 @@
 #pragma once
 
 #include <kesrv/empty.hxx>
-#include <kesrv/json.hxx>
 #include <kesrv/property.hxx>
 #include <kesrv/sourcelocation.hxx>
 
@@ -122,11 +121,9 @@ protected:
 };
 
 
-KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
-KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
-KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
+// NOTE: this will trash the input buffer
+KESRV_EXPORT PropertyBag propertyBagFromJson(char* json, IPropertyErrorHandler* eh);
 
-KESRV_EXPORT PropertyBag propertyBagFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
 
 
 } // namespace Kes {}

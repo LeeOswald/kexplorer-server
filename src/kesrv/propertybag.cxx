@@ -1,10 +1,13 @@
 #include <kesrv/exception.hxx>
+#include <kesrv/json.hxx>
 #include <kesrv/knownprops.hxx>
 #include <kesrv/propertybag.hxx>
 #include <kesrv/util/format.hxx>
 
 namespace Kes
 {
+
+static PropertyBag propertyBagFromJsonValue(const char* name, const Json::Value& v, IPropertyErrorHandler* eh);
 
 static void handleError(SourceLocation where, IPropertyErrorHandler* eh, const char* format, ...)
 {
@@ -21,7 +24,7 @@ static void handleError(SourceLocation where, IPropertyErrorHandler* eh, const c
 }
 
 
-KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
+static Property propertyFromJsonValue(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
 {
     if (v.IsArray())
     {
@@ -117,7 +120,7 @@ KESRV_EXPORT Property propertyFromJson(const char* name, const Json::Value& v, I
     }
 
     handleError(KES_HERE(), eh, "Property \'%s\' is of an unsupported type \'%s\'", name, type.name());
-        
+
     return Property();
 }
 
@@ -132,7 +135,7 @@ static PropertyBag arrayItemFromJson(const char* arrayName, const std::type_info
 
     if (v.IsObject())
     {
-        return propertyBagFromJson("", v, eh);
+        return propertyBagFromJsonValue("", v, eh);
     }
 
     if (type == typeid(bool))
@@ -210,7 +213,7 @@ static PropertyBag arrayItemFromJson(const char* arrayName, const std::type_info
     return PropertyBag();
 }
 
-KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
+static PropertyBag::Array arrayFromJsonValue(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
 {
     auto info = lookupProperty(name);
     if (!info)
@@ -224,7 +227,7 @@ KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Valu
     {
         handleError(KES_HERE(), eh, "Property \'%s\' is not a \'PropertyBag::Array\'", name);
         return PropertyBag::Array();
-    } 
+    }
 
     if (!v.IsArray())
     {
@@ -235,17 +238,17 @@ KESRV_EXPORT PropertyBag::Array arrayFromJson(const char* name, const Json::Valu
     auto& baseType = info->base();
 
     PropertyBag::Array array;
-    
+
     for (size_t index = 0; index < v.Size(); ++index)
     {
         auto item = arrayItemFromJson(name, baseType, index, v[index], eh);
         array.push_back(std::make_unique<PropertyBag>(std::move(item)));
     }
-    
+
     return array;
 }
 
-KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
+static PropertyBag::Table tableFromJsonValue(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
 {
     if (!v.IsObject())
     {
@@ -257,23 +260,37 @@ KESRV_EXPORT PropertyBag::Table tableFromJson(const char* name, const Json::Valu
     for (auto m = v.MemberBegin(); m != v.MemberEnd(); ++m)
     {
         std::string memberName(m->name.GetString(), m->name.GetStringLength());
-        auto member = propertyBagFromJson(memberName.c_str(), m->value, eh);
-        
+        auto member = propertyBagFromJsonValue(memberName.c_str(), m->value, eh);
+
         table.insert({ memberName, std::make_unique<PropertyBag>(std::move(member)) });
     }
 
     return table;
 }
 
-KESRV_EXPORT PropertyBag propertyBagFromJson(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
+static PropertyBag propertyBagFromJsonValue(const char* name, const Json::Value& v, IPropertyErrorHandler* eh)
 {
     if (v.IsObject())
-        return PropertyBag(name, tableFromJson(name, v, eh));
+        return PropertyBag(name, tableFromJsonValue(name, v, eh));
 
     if (v.IsArray())
-        return PropertyBag(name, arrayFromJson(name, v, eh));
+        return PropertyBag(name, arrayFromJsonValue(name, v, eh));
 
-    return PropertyBag(name, propertyFromJson(name, v, eh));
+    return PropertyBag(name, propertyFromJsonValue(name, v, eh));
+}
+
+
+KESRV_EXPORT PropertyBag propertyBagFromJson(char* json, IPropertyErrorHandler* eh)
+{
+    Kes::Json::Document doc;
+    doc.ParseInsitu(json);
+    if (doc.HasParseError())
+    {
+        auto err = doc.GetParseError();
+        throw Exception(KES_HERE(), Util::format("Failed to parse JSON: [%s] at %zu", Json::GetParseError_En(err), doc.GetErrorOffset()));
+    }
+
+    return propertyBagFromJsonValue("", doc, eh);
 }
 
 } // namespace Kes {}
