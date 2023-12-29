@@ -2,9 +2,6 @@
 
 #include <kesrv/kesrv.hxx>
 
-#include <boost/asio.hpp>
-
-
 
 namespace Kes
 {

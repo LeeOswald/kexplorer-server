@@ -4,6 +4,7 @@
 #include <kesrv/sourcelocation.hxx>
 #include <kesrv/util/crc32.hxx>
 
+#include <boost/stacktrace.hpp>
 
 namespace Kes
 {
@@ -147,5 +148,4 @@ using PosixErrorCode = PropertyInfo<int, KES_PROPID("posix_error_code"), "POSIX 
 
 
 
-#define KES_HERE() Kes::SourceLocation::current()
 

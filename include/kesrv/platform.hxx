@@ -21,8 +21,15 @@
 #define KES_64 (UINT64_MAX == UINTPTR_MAX)
 
 // often-used platform headers
-#ifndef _GNU_SOURCE
-    #define _GNU_SOURCE
+
+
+#include <boost/asio.hpp>
+#include <boost/stacktrace.hpp>
+
+#if KES_LINUX
+    #ifndef _GNU_SOURCE
+        #define _GNU_SOURCE
+    #endif
 #endif
 
 #include <errno.h>
@@ -65,3 +72,10 @@
 
 #endif // _countof
 
+#ifdef min
+    #undef min
+#endif
+
+#ifdef max
+    #undef max
+#endif

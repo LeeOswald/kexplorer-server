@@ -57,8 +57,14 @@ void formatException(const Kes::Exception& e, std::ostringstream& out, int level
         out << e.what();
     }
 
-    out << "\n" << indent << " File: " << e.source().file_name();
-    out << "\n" << indent << " Line: " << e.source().line();
+    out << "\n" << indent << " File: " << e.source().source.file_name();
+    out << "\n" << indent << " Line: " << e.source().source.line();
+
+    if (!e.source().stack.empty())
+    {
+        out << "\n" << indent << " Stack:\n";
+        out << e.source().stack;
+    }
 
     auto properties = e.properties();
     if (properties)
