@@ -24,6 +24,7 @@ add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/platform.hxx
     ../../include/kesrv/property.hxx
     ../../include/kesrv/propertybag.hxx
+    ../../include/kesrv/request.hxx
     ../../include/kesrv/sourcelocation.hxx
     ../../include/kesrv/stringliteral.hxx
     ../../include/kesrv/util/autoptr.hxx
@@ -34,7 +35,7 @@ add_library(${KES_SRVLIB} SHARED
     ../../include/kesrv/util/generichandle.hxx
     ../../include/kesrv/util/netutil.hxx
     ../../include/kesrv/util/readbuffer.hxx
-    ../../include/kesrv/util/request.hxx
+    ../../include/kesrv/util/requestutil.hxx
     exception.cxx
     init.cxx
     knownprops.cxx
@@ -42,7 +43,7 @@ add_library(${KES_SRVLIB} SHARED
     util/exceptionutil.cxx
     util/format.cxx
     util/netutil.cxx
-    util/request.cxx
+    util/requestutil.cxx
     ${PLATFORM_FILES}
 )
 

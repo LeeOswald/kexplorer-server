@@ -1,7 +1,7 @@
 #include "requestprocessor.hxx"
 
 #include <kesrv/exception.hxx>
-#include <kesrv/util/request.hxx>
+#include <kesrv/util/requestutil.hxx>
 
 
 namespace Kes
@@ -56,20 +56,25 @@ std::string RequestProcessor::process(uint32_t sessionId, char* request, [[maybe
         if (!parsedRequest.isTable())
         {
             m_log->write(Log::Level::Error, "RequestProcessor: request is not a JSON object");
-            return Util::Response::fail("Not a JSON object");
+            return Util::Response::fail(0, "Not a JSON object");
         }
 
-        auto requestKeyIt = parsedRequest.table().find(Kes::Util::Request::Props::Command::idstr());
+        Kes::Request::Id requestId = 0;
+        auto idIt = parsedRequest.table().find(Kes::Request::Props::Id::idstr());
+        if (idIt != parsedRequest.table().end())
+            requestId = std::any_cast<Kes::Request::Id>(idIt->second->property().value);
+
+        auto requestKeyIt = parsedRequest.table().find(Kes::Request::Props::Command::idstr());
         if (requestKeyIt == parsedRequest.table().end())
         {
             m_log->write(Log::Level::Error, "RequestProcessor: \'request\' key not found");
-            return Util::Response::fail("Unsupported request");
+            return Util::Response::fail(requestId, "Unsupported request");
         }
 
         if (!requestKeyIt->second->isProperty())
         {
             m_log->write(Log::Level::Error, "RequestProcessor: ill-formed reuest");
-            return Util::Response::fail("Ill-formed request");
+            return Util::Response::fail(requestId, "Ill-formed request");
         }
 
         auto key = std::any_cast<std::string>(requestKeyIt->second->property().value);
@@ -85,14 +90,14 @@ std::string RequestProcessor::process(uint32_t sessionId, char* request, [[maybe
                 for (auto it = range.first; it != range.second; ++it)
                 {
                     auto handler = it->second;
-                    handlerFound = handler->process(sessionId, key.c_str(), parsedRequest, response);
+                    handlerFound = handler->process(sessionId, key.c_str(), requestId, parsedRequest, response);
                 }
             }
 
             if (!handlerFound)
             {
                 m_log->write(Log::Level::Error, "RequestProcessor: unsupported request");
-                return Util::Response::fail("Unsupported request");
+                return Util::Response::fail(requestId, "Unsupported request");
             }
 
             auto out = propertyBagToJson(response);
@@ -105,11 +110,11 @@ std::string RequestProcessor::process(uint32_t sessionId, char* request, [[maybe
     catch (std::exception& e)
     {
         m_log->write(Log::Level::Error, "RequestProcessor: %s", e.what());
-        return Util::Response::fail(e.what());
+        return Util::Response::fail(0, e.what());
     }
 
     m_log->write(Log::Level::Error, "RequestProcessor: unsupported request");
-    return Util::Response::fail("Unsupported request");
+    return Util::Response::fail(0, "Unsupported request");
 }
 
 void RequestProcessor::registerHandler(const char* key, IRequestHandler* handler)

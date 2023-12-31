@@ -1,7 +1,7 @@
 #include "globalcmdhandler.hxx"
 #include "kexplorer-version.h"
 
-#include <kesrv/util/request.hxx>
+#include <kesrv/util/requestutil.hxx>
 
 #include <sstream>
 
@@ -42,7 +42,7 @@ GlobalCmdHandler::GlobalCmdHandler(IRequestProcessor* rp, Condition& exitConditi
     }
 }
 
-bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response)
+bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response)
 {
     assert(request.isTable());
     assert(response.isTable());
@@ -51,7 +51,8 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Proper
     {
         m_log->write(Log::Level::Info, "GlobalCmdHandler: [stop] command received");
 
-        Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
+        Util::addToTable<Kes::Request::Props::Id>(response, id);
+        Util::addToTable<Kes::Response::Props::Status>(response, std::string(Kes::Response::Success));
                 
         m_exitCondition.set();
 
@@ -65,8 +66,9 @@ bool GlobalCmdHandler::process(uint32_t sessionId, const char* key, const Proper
         ss << KES_APPLICATION_NAME << " " << KES_VERSION_STR << " " << KES_COPYRIGHT;
         auto v = ss.str();
 
-        Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
-        Util::addToTable<Kes::Util::Response::Props::Version>(response, std::move(v));
+        Util::addToTable<Kes::Request::Props::Id>(response, id);
+        Util::addToTable<Kes::Response::Props::Status>(response, std::string(Kes::Response::Success));
+        Util::addToTable<Kes::Response::Props::Version>(response, std::move(v));
         
         return true;
     }

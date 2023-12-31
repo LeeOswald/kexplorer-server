@@ -1,7 +1,7 @@
 #include "client.hxx"
 
 #include <kesrv/util/netutil.hxx>
-#include <kesrv/util/request.hxx>
+#include <kesrv/util/requestutil.hxx>
 
 #include <iostream>
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
 
         auto cmd = vm["command"].as<std::string>();
-        client.command(Kes::Util::Request::simple(cmd.c_str()));
+        client.command(Kes::Util::Request::simple(1, cmd.c_str()));
 
         io.run();
 

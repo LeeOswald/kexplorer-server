@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kesrv/propertybag.hxx>
+#include <kesrv/request.hxx>
 
 namespace Kes
 {
@@ -11,14 +12,10 @@ namespace Util
 namespace Request
 {
 
-KESRV_EXPORT std::string simple(const char* command);
+KESRV_EXPORT std::string simple(Kes::Request::Id id, const char* command);
 
 namespace Props
 {
-
-using Command = PropertyInfo<std::string, KES_PROPID("request.request"), "Request", PropertyFormatter<std::string>>;
-
-} // namespace Props {}
 
 namespace Private
 {
@@ -26,6 +23,8 @@ namespace Private
 void registerAll();
 
 } // namespace Private {}
+
+} // namespace Props {}
 
 } // namespace Request {}
 
@@ -33,19 +32,10 @@ void registerAll();
 namespace Response
 {
 
-KESRV_EXPORT std::string fail(const char* reason);
-
-constexpr const char* const Success = "success";
-constexpr const char* const Fail = "fail";
+KESRV_EXPORT std::string fail(Kes::Request::Id id, const char* reason);
 
 namespace Props
 {
-
-using Status = PropertyInfo<std::string, KES_PROPID("response.status"), "Status", PropertyFormatter<std::string>>;
-using Reason = PropertyInfo<std::string, KES_PROPID("response.reason"), "Reason", PropertyFormatter<std::string>>;
-using Version = PropertyInfo<std::string, KES_PROPID("response.srv_version"), "Server Version", PropertyFormatter<std::string>>;
-
-} // namespace Props {}
 
 namespace Private
 {
@@ -53,6 +43,8 @@ namespace Private
 void registerAll();
 
 } // namespace Private {}
+
+} // namespace Props {}
 
 } // namespace Response {}
 

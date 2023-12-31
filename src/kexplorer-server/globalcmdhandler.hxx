@@ -23,7 +23,7 @@ public:
     GlobalCmdHandler(GlobalCmdHandler&&) = delete;
     GlobalCmdHandler& operator=(GlobalCmdHandler&&) = delete;
     
-    bool process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response) override;
+    bool process(uint32_t sessionId, const char* key, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response) override;
     void startSession(uint32_t id) override;
     void endSession(uint32_t id) override;
 

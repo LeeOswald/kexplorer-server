@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kesrv/propertybag.hxx>
+#include <kesrv/request.hxx>
 
 
 namespace Kes
@@ -9,7 +10,7 @@ namespace Kes
 
 struct IRequestHandler
 {
-    virtual bool process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response) = 0;
+    virtual bool process(uint32_t sessionId, const char* key, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response) = 0;
     virtual void startSession(uint32_t id) = 0;
     virtual void endSession(uint32_t id) = 0;
 

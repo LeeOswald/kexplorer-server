@@ -1,6 +1,6 @@
 #include <kesrv/processmanager/processmanager.hxx>
 #include <kesrv/processmanager/processprops.hxx>
-#include <kesrv/util/request.hxx>
+#include <kesrv/util/requestutil.hxx>
 
 namespace Kes
 {
@@ -38,7 +38,7 @@ ProcessManager::ProcessManager(IRequestProcessor* rp, Log::ILog* log)
     }
 }
 
-bool ProcessManager::process(uint32_t sessionId, const char* key, const PropertyBag& request, PropertyBag& response)
+bool ProcessManager::process(uint32_t sessionId, const char* key, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response)
 {
     assert(request.isTable());
     assert(response.isTable());
@@ -50,7 +50,7 @@ bool ProcessManager::process(uint32_t sessionId, const char* key, const Property
     if (it == m_sessions.end())
         return false;
 
-    if (process(it->second.get(), key, request, response))
+    if (process(it->second.get(), key, id, request, response))
         return true;
 
     m_log->write(Log::Level::Error, "ProcessManager: unknown command [%s]", key);
@@ -64,7 +64,6 @@ void ProcessManager::startSession(uint32_t id)
     auto it = m_sessions.find(id);
     if (it != m_sessions.end())
     {
-        LogDebug(m_log, "Session %d already exists", id);
         return;
     }
 
@@ -82,17 +81,17 @@ void ProcessManager::endSession(uint32_t id)
     }
 }
 
-bool ProcessManager::process(Session* session, const char* key, const PropertyBag& request, PropertyBag& response)
+bool ProcessManager::process(Session* session, const char* key, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response)
 {
     if (!std::strcmp(key, "list_processes"))
-        return listProcesses(true, session, request, response);
+        return listProcesses(true, session, id, request, response);
     else if (!std::strcmp(key, "diff_processes"))
-        return listProcesses(false, session, request, response);
+        return listProcesses(false, session, id, request, response);
 
     return false;
 }
 
-bool ProcessManager::listProcesses(bool initial, Session* session, const PropertyBag& request, PropertyBag& response)
+bool ProcessManager::listProcesses(bool initial, Session* session, Kes::Request::Id id, const PropertyBag& request, PropertyBag& response)
 {
     readProcesses(initial, session);
 
@@ -122,7 +121,8 @@ bool ProcessManager::listProcesses(bool initial, Session* session, const Propert
         Util::addToTable<Kes::ProcessProps::DeletedProcessList>(response, std::move(processArray));
     }
 
-    Util::addToTable<Kes::Util::Response::Props::Status>(response, std::string(Util::Response::Success));
+    Util::addToTable<Kes::Request::Props::Id>(response, id);
+    Util::addToTable<Kes::Response::Props::Status>(response, std::string(Kes::Response::Success));
     return true;
 }
 
