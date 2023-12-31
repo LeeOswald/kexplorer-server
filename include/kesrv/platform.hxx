@@ -24,6 +24,7 @@
 
 
 #include <boost/asio.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/stacktrace.hpp>
 
 #if KES_LINUX

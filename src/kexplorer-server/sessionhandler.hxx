@@ -28,16 +28,11 @@ struct SessionHandlerOptions
 
 
 class SessionHandler final
+    : public boost::noncopyable
 {
 public:
     ~SessionHandler();
     explicit SessionHandler(const SessionHandlerOptions& options, const std::string& peerAddr, uint32_t id);
-
-    SessionHandler(const SessionHandler&) = delete;
-    SessionHandler& operator=(const SessionHandler&) = delete;
-
-    SessionHandler(SessionHandler&&) = delete;
-    SessionHandler& operator=(SessionHandler&&) = delete;
 
     void close() noexcept;
     std::pair<CallbackResult, std::string> process(const char* data, size_t size) noexcept;

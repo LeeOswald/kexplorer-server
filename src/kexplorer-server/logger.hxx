@@ -14,16 +14,11 @@ namespace Private
 
 class Logger final
     : public Kes::Log::ILog
+    , public boost::noncopyable
 {
 public:
     ~Logger();
     explicit Logger(Kes::Log::Level level, const char* fileName);
-
-    Logger(const Logger&) = delete;
-    Logger& operator=(const Logger&) = delete;
-
-    Logger(Logger&&) = delete;
-    Logger& operator=(Logger&&) = delete;
 
     Kes::Log::Level level() const noexcept override;
     bool writev(Kes::Log::Level level, const char* format, va_list args) noexcept override;

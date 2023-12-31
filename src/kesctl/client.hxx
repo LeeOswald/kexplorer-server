@@ -13,16 +13,11 @@ namespace Kesctl
 {
 
 class Client final
+    : public boost::noncopyable
 {
 public:
     ~Client();
     explicit Client(boost::asio::io_context& io, const char* addr, uint16_t port, bool verbose, std::ostream& cout, std::ostream& cerr);
-
-    Client(const Client&) = delete;
-    Client& operator=(const Client&) = delete;
-
-    Client(Client&&) = delete;
-    Client& operator=(Client&&) = delete;
 
     void command(const std::string& cmd);
     void stop() noexcept;

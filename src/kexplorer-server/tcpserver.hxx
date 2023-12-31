@@ -21,6 +21,7 @@ namespace Private
 
 template <class SessionHandlerT, class SessionHandlerArgsT>
 class TcpServer final
+    : public boost::noncopyable
 {
 public:
     using SessionHandler = SessionHandlerT;
@@ -63,12 +64,6 @@ public:
 
         accept();
     }
-
-    TcpServer(const TcpServer&) = delete;
-    TcpServer& operator=(const TcpServer&) = delete;
-
-    TcpServer(TcpServer&&) = delete;
-    TcpServer& operator=(TcpServer&&) = delete;
 
     void removeSession(uint32_t id) noexcept
     {

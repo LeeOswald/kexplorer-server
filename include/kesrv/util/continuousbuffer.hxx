@@ -13,18 +13,13 @@ namespace Util
 
 
 class ContinuousBuffer final
+    : public boost::noncopyable
 {
 public:
     explicit ContinuousBuffer(size_t size, size_t limit)
         : m_buffer(size)
         , m_limit(limit)
     {}
-
-    ContinuousBuffer(const ContinuousBuffer&) = delete;
-    ContinuousBuffer& operator=(const ContinuousBuffer&) = delete;
-
-    ContinuousBuffer(ContinuousBuffer&&) = delete;
-    ContinuousBuffer& operator=(ContinuousBuffer&&) = delete;
 
     size_t capacity() const noexcept
     {

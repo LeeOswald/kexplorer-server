@@ -13,6 +13,7 @@ namespace Util
 {
 
 class ReadBuffer final
+    : public boost::noncopyable
 {
 public:
     using Ptr = std::shared_ptr<ReadBuffer>;
@@ -22,13 +23,7 @@ public:
         , m_size(size)
     {
     }
-
-    ReadBuffer(const ReadBuffer&) = delete;
-    ReadBuffer& operator=(const ReadBuffer&) = delete;
-
-    ReadBuffer(ReadBuffer&&) = delete;
-    ReadBuffer& operator=(ReadBuffer&&) = delete;
-
+    
     static Ptr create(size_t size)
     {
         return std::make_shared<ReadBuffer>(size);

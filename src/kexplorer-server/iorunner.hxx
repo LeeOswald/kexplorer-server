@@ -15,6 +15,7 @@ namespace Private
 
 
 class IoRunner final
+    : public boost::noncopyable
 {
 public:
     ~IoRunner()
@@ -43,12 +44,6 @@ public:
             m_workers.push_back(std::make_unique<std::thread>([this, i]() { run(i); }));
         }
     }
-
-    IoRunner(const IoRunner&) = delete;
-    IoRunner& operator=(const IoRunner&) = delete;
-
-    IoRunner(IoRunner&&) = delete;
-    IoRunner& operator=(IoRunner&&) = delete;
 
     boost::asio::io_context& io_context() noexcept
     {

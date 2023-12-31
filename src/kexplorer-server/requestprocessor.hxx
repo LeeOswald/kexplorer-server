@@ -16,22 +16,13 @@ namespace Private
 
 class RequestProcessor final
     : public IRequestProcessor
+    , public boost::noncopyable
 {
 public:
     explicit RequestProcessor(Log::ILog* log)
         : m_log(log)
     {
     }
-
-    ~RequestProcessor()
-    {
-    }
-
-    RequestProcessor(const RequestProcessor&) = delete;
-    RequestProcessor& operator=(const RequestProcessor&) = delete;
-
-    RequestProcessor(RequestProcessor&&) = delete;
-    RequestProcessor& operator=(RequestProcessor&&) = delete;
 
     std::string process(uint32_t sessionId, char* request, size_t length) override;
     void registerHandler(const char* key, IRequestHandler* handler) override;
